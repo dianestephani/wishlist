@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .email import send_purchased_email, send_undo_email
 from .forms import ActivityForm, EventForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
-from .models import Activity, Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
+from .models import Activity, Event, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
     "price_asc": "price",
@@ -22,11 +22,13 @@ def dashboard(request):
     wishlists = Wishlist.objects.filter(owner=request.user)[:5]
     events = Event.objects.filter(owner=request.user)[:5]
     activities = Activity.objects.filter(owner=request.user)[:5]
+    friendships = Friendship.objects.filter(user=request.user).select_related("friend")[:10]
 
     context = {
         "wishlists": wishlists,
         "events": events,
         "activities": activities,
+        "friendships": friendships,
     }
     return render(request, "wishlist/dashboard.html", context)
 
@@ -241,7 +243,21 @@ def delete_account(request):
 
 @login_required
 def friends(request):
-    return render(request, "wishlist/friends.html")
+    friendships = Friendship.objects.filter(user=request.user).select_related("friend")
+    return render(request, "wishlist/friends.html", {"friendships": friendships})
+
+
+@login_required
+def public_profile(request, user_id):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    profile_user = get_object_or_404(User, pk=user_id)
+    is_friend = Friendship.objects.filter(user=request.user, friend=profile_user).exists()
+    context = {
+        "profile_user": profile_user,
+        "is_friend": is_friend,
+    }
+    return render(request, "wishlist/public_profile.html", context)
 
 
 @login_required

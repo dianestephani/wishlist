@@ -83,5 +83,25 @@
             <a href="{% url 'wishlist:activities' %}" class="dashboard-card-see-all">See All</a>
         </div>
     </div>
+
+    <!-- Friends -->
+    <div class="dashboard-friends">
+        <div class="dashboard-friends-header">
+            <h2>Friends</h2>
+            <a href="{% url 'wishlist:friends' %}" class="dashboard-card-see-all">See All</a>
+        </div>
+        {% if friendships %}
+            <div class="friends-row">
+                {% for friendship in friendships %}
+                    <a href="{% url 'wishlist:public_profile' friendship.friend.id %}" class="friend-chip">
+                        <span class="friend-avatar">{{ friendship.friend.first_name|make_list|first|default:"?" }}{{ friendship.friend.last_name|make_list|first|default:"" }}</span>
+                        <span class="friend-name">{{ friendship.friend.first_name }} {{ friendship.friend.last_name }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No friends yet.</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

@@ -1438,7 +1438,130 @@ strong {
     color: var(--pink-light);
 }
 
-/* ===== Friends ===== */
+/* ===== Dashboard friends ===== */
+.dashboard-friends {
+    margin-top: 1.5rem;
+}
+
+.dashboard-friends-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.dashboard-friends-header h2 {
+    color: var(--pink-light);
+    font-size: 1.1rem;
+}
+
+.friends-row {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.friend-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    min-width: 80px;
+    transition: transform 0.15s;
+}
+
+.friend-chip:hover {
+    transform: translateY(-2px);
+}
+
+.friend-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #5eead4;
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.friend-name {
+    font-size: 0.78rem;
+    color: var(--text);
+    text-align: center;
+    font-weight: 500;
+}
+
+/* ===== Friends grid (full page) ===== */
+.friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.friend-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-shadow);
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.friend-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(94, 234, 212, 0.15);
+}
+
+.friend-card-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #5eead4;
+    color: #0f172a;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.friend-card-name {
+    font-size: 0.88rem;
+    color: var(--text);
+    font-weight: 500;
+    text-align: center;
+}
+
+.friend-card-username {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.friend-badge-inline {
+    text-align: center;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background: rgba(94, 234, 212, 0.15);
+    border: 1px solid rgba(94, 234, 212, 0.3);
+    border-radius: 8px;
+    color: #5eead4;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ===== Friends search ===== */
 .friends-search {
     background: var(--glass-bg);
     backdrop-filter: blur(16px);

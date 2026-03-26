@@ -724,6 +724,32 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, reverse("wishlist:events"))
         self.assertContains(response, reverse("wishlist:activities"))
 
+    def test_shows_friends_section(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Friends")
+
+    def test_shows_friends_in_dashboard(self):
+        friend = User.objects.create_user(
+            username="buddy", email="buddy@example.com", password="pass123",
+            first_name="Best", last_name="Friend",
+        )
+        Friendship.objects.create(user=self.user, friend=friend)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Best Friend")
+        self.assertContains(response, reverse("wishlist:public_profile", args=[friend.pk]))
+
+    def test_does_not_show_non_friends(self):
+        stranger = User.objects.create_user(
+            username="stranger", email="stranger@example.com", password="pass123",
+            first_name="Some", last_name="Stranger",
+        )
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Some Stranger")
+
+    def test_shows_empty_friends(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No friends yet")
+
 
 # ---------------------------------------------------------------------------
 # Events list view tests
@@ -1767,6 +1793,71 @@ class FriendsViewTests(TestCase):
     def test_shows_empty_state(self):
         response = self.client.get(self.url)
         self.assertContains(response, "No friends added yet")
+
+    def test_shows_friend_list(self):
+        friend = User.objects.create_user(
+            username="buddy", email="buddy@example.com", password="pass123",
+            first_name="Jane", last_name="Doe",
+        )
+        Friendship.objects.create(user=self.user, friend=friend)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Jane Doe")
+        self.assertContains(response, reverse("wishlist:public_profile", args=[friend.pk]))
+
+    def test_does_not_show_non_friends(self):
+        User.objects.create_user(
+            username="stranger", email="stranger@example.com", password="pass123",
+            first_name="Not", last_name="Friend",
+        )
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Not Friend")
+
+
+# ---------------------------------------------------------------------------
+# Public profile view tests
+# ---------------------------------------------------------------------------
+class PublicProfileViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123",
+        )
+        self.friend = User.objects.create_user(
+            username="buddy", email="buddy@example.com", password="pass123",
+            first_name="Jane", last_name="Doe", phone_number="555-9999",
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:public_profile", args=[self.friend.pk])
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_renders_public_profile(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/public_profile.html")
+        self.assertContains(response, "Jane Doe")
+        self.assertContains(response, "@buddy")
+        self.assertContains(response, "buddy@example.com")
+
+    def test_shows_friend_badge_if_friends(self):
+        Friendship.objects.create(user=self.user, friend=self.friend)
+        response = self.client.get(self.url)
+        self.assertContains(response, "You are friends")
+
+    def test_no_friend_badge_if_not_friends(self):
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "You are friends")
+
+    def test_shows_avatar_initials(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "profile-avatar")
+
+    def test_nonexistent_user_returns_404(self):
+        url = reverse("wishlist:public_profile", args=[99999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
 
 # ---------------------------------------------------------------------------

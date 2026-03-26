@@ -17,6 +17,18 @@
 
 <div class="friends-section">
     <h2 class="section-title">My Friends</h2>
-    <p class="empty-state">No friends added yet.</p>
+    {% if friendships %}
+        <div class="friends-grid">
+            {% for friendship in friendships %}
+                <a href="{% url 'wishlist:public_profile' friendship.friend.id %}" class="friend-card">
+                    <div class="friend-card-avatar">{{ friendship.friend.first_name|make_list|first|default:"?" }}{{ friendship.friend.last_name|make_list|first|default:"" }}</div>
+                    <span class="friend-card-name">{{ friendship.friend.first_name }} {{ friendship.friend.last_name }}</span>
+                    <span class="friend-card-username">@{{ friendship.friend.username }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">No friends added yet.</p>
+    {% endif %}
 </div>
 {% endblock %}

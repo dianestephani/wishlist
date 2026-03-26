@@ -73,14 +73,15 @@ See `.env.example` for a template.
 
 ## Features
 
-- **Personalized dashboard** — Welcome message with first name, 3 clickable cards (Wishlists, Events, Activities), "Create +" dropdown with modals, all scoped to the logged-in user
+- **Personalized dashboard** — Welcome message with first name, 3 clickable cards (Wishlists, Events, Activities), friends row with avatars, "Create +" dropdown with modals, all scoped to the logged-in user
 - **User authentication** — Register, login, logout with custom User model (email, phone number)
 - **User profiles** — View/edit profile (username, name, email, phone), seafoam avatar with initials, delete account with cascade
 - **Wishlists** — Create multiple wishlists, each with their own items. Full CRUD on wishlists and items
 - **Events** — Create events with title, date, start/end times, address, notes. Full CRUD
 - **Activities** — Track activities with title, location, notes. Full CRUD
 - **Friend system** — Friendship model (directional), auto-friend admin on registration
-- **Friends page** — Search bar for finding users by username/email/phone, "My Friends" section
+- **Friends page** — Search bar for finding users, friend cards with avatars, links to public profiles
+- **Public profiles** — View any user's profile (name, email, phone, member since) with "You are friends" badge
 - **Mark as purchased** — Confirm with checkbox disclaimer and optional message
 - **Undo purchase** — "Just kidding!" reverts item to available
 - **Email notifications** — Resend API emails on purchase/undo with user contact info
@@ -185,6 +186,7 @@ wishlist/
 | `/profile/edit/` | `edit_profile` | Edit profile (including username) |
 | `/profile/delete/` | `delete_account` | Delete account |
 | `/friends/` | `friends` | Friends page with search |
+| `/user/<id>/` | `public_profile` | Public user profile |
 | `/register/` | `register_view` | User registration |
 | `/login/` | `login_view` | User login |
 | `/logout/` | `logout_view` | User logout |
@@ -230,16 +232,17 @@ python manage.py test --verbosity=2
 
 ### Test coverage
 
-240 tests in `wishlist/tests.py` covering:
+252 tests in `wishlist/tests.py` covering:
 
 | Area | What's tested |
 | --- | --- |
 | **Models** | User, Wishlist, WishlistItem, Event, Activity, Purchase, ItemEvent, ItemView, StoreClick, Friendship — creation, defaults, ordering, cascade delete, unique constraints |
 | **Forms** | ProfileForm (username/email uniqueness), RegistrationForm, EventForm (time validation), ActivityForm, WishlistForm, WishlistItemForm, PurchaseForm, UndoPurchaseForm |
 | **Auth views** | Register (success, auto-login, message, errors, redirect), Login (success, message, failure, redirect), Logout (redirect, message, session cleared) |
-| **Dashboard** | Login required, personalized welcome (first name / username fallback), 3 sections, data display, empty states, user isolation for wishlists/events/activities, card links |
+| **Dashboard** | Login required, personalized welcome (first name / username fallback), 3 sections + friends row, data display, empty states, user isolation for wishlists/events/activities/friends, card links |
 | **Profile** | View profile, edit (username change, email uniqueness), delete account with cascade |
-| **Friends** | Page renders, search input, empty state |
+| **Friends** | Page renders, search input, empty state, shows friend list, hides non-friends |
+| **Public profiles** | Login required, displays user info, avatar, friend badge when friends, no badge when not, 404 for invalid user |
 | **CRUD views** | Create/edit/delete for wishlists, items, events, activities — login required, form display, success, validation, messages, user isolation (404 for other users) |
 | **Wishlists index** | Shows user's wishlists, item counts, action buttons, links to detail, empty state, isolation |
 | **Item detail** | Displays info, OG meta tags, purchase/undo buttons, edit/delete, view counter, superuser-only logs |

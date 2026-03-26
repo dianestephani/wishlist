@@ -987,3 +987,53 @@ class SendUndoEmailTests(TestCase):
     def test_handles_api_failure_gracefully(self, mock_send):
         result = send_undo_email(self.user, self.item)
         self.assertIsNone(result)
+
+
+# ---------------------------------------------------------------------------
+# Mobile / responsive layout tests
+# ---------------------------------------------------------------------------
+class MobileLayoutTests(TestCase):
+    """Verify that templates include proper mobile/responsive markup."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+
+    def test_viewport_meta_tag_present(self):
+        response = self.client.get(reverse("wishlist:login"))
+        self.assertContains(response, 'name="viewport"')
+        self.assertContains(response, "width=device-width")
+
+    def test_viewport_on_index_page(self):
+        self.client.login(username="testuser", password="pass123")
+        response = self.client.get(reverse("wishlist:index"))
+        self.assertContains(response, 'name="viewport"')
+
+    def test_viewport_on_register_page(self):
+        response = self.client.get(reverse("wishlist:register"))
+        self.assertContains(response, 'name="viewport"')
+
+    def test_viewport_on_item_detail(self):
+        self.client.login(username="testuser", password="pass123")
+        item = WishlistItem.objects.create(user=self.user, title="Mobile Test")
+        url = reverse("wishlist:item_detail", args=[item.pk])
+        response = self.client.get(url)
+        self.assertContains(response, 'name="viewport"')
+
+    def test_sticky_header_class(self):
+        """Verify the header element is present so sticky CSS applies."""
+        response = self.client.get(reverse("wishlist:login"))
+        self.assertContains(response, "<header>")
+
+    def test_nav_links_present_for_anonymous(self):
+        response = self.client.get(reverse("wishlist:login"))
+        self.assertContains(response, "nav-links")
+        self.assertContains(response, "nav-brand")
+
+    def test_nav_links_present_for_authenticated(self):
+        self.client.login(username="testuser", password="pass123")
+        response = self.client.get(reverse("wishlist:index"))
+        self.assertContains(response, "nav-links")
+        self.assertContains(response, "nav-user")
+        self.assertContains(response, "Logout")

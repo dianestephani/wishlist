@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Wishlist{% endblock %}
+
+{% block content %}
+<div class="auth-form">
+    <h1>Create an Account</h1>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <ul class="form-errors">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                {% if field.help_text %}
+                    <p class="form-help">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+            <ul class="form-errors">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p class="auth-link">Already have an account? <a href="{% url 'wishlist:login' %}">Login</a></p>
+</div>
+{% endblock %}

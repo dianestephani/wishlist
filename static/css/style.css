@@ -18,11 +18,36 @@ header {
     padding: 1rem 2rem;
 }
 
+header nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+}
+
 header nav a {
     color: #fff;
     text-decoration: none;
     font-size: 1.25rem;
     font-weight: 600;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.nav-links a {
+    font-size: 0.95rem;
+    font-weight: 400;
+}
+
+.nav-user {
+    color: #ccc;
+    font-size: 0.95rem;
 }
 
 main {
@@ -39,4 +64,77 @@ footer {
     padding: 1rem;
     color: #777;
     font-size: 0.875rem;
+}
+
+/* Auth forms */
+.auth-form {
+    max-width: 440px;
+    margin: 2rem auto;
+}
+
+.auth-form h1 {
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2c3e50;
+}
+
+.form-errors {
+    list-style: none;
+    color: #c0392b;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+.form-help {
+    color: #777;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.auth-form button {
+    width: 100%;
+    padding: 0.625rem;
+    background: #2c3e50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.auth-form button:hover {
+    background: #1a252f;
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.auth-link a {
+    color: #2c3e50;
+    font-weight: 500;
 }

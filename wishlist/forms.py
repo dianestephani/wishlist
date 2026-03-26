@@ -35,7 +35,7 @@ class PurchaseForm(forms.Form):
         required=True,
         label=(
             "I confirm that I have purchased this item. If I have not purchased it "
-            "and I click Purchased anyway, I understand that I am responsible for "
+            "and I click Confirm Purchase anyway, I understand that I am responsible for "
             "contacting Diane and telling her personally that I lied about getting "
             "her a birthday present."
         ),

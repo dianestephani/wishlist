@@ -12,7 +12,7 @@ SECRET_KEY = "django-insecure-CHANGE-ME-before-deploying-to-production"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["wishlist-chi-flame.vercel.app"]
+ALLOWED_HOSTS = ["wishlist-chi-flame.vercel.app", "127.0.0.1"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",

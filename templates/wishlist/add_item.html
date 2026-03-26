@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Add Item - {{ wishlist_obj.title }}{% endblock %}
+{% block title %}Add Item - {{ wishlist_obj.name }}{% endblock %}
 
 {% block content %}
 <div class="auth-form">
     <h1>Add Item</h1>
-    <p class="form-help">Adding to: <strong>{{ wishlist_obj.title }}</strong></p>
+    <p class="form-help">Adding to: <strong>{{ wishlist_obj.name }}</strong></p>
 
     <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}

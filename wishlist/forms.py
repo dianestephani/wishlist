@@ -60,7 +60,7 @@ class ProfileForm(forms.ModelForm):
 class WishlistForm(forms.ModelForm):
     class Meta:
         model = Wishlist
-        fields = ["title", "description"]
+        fields = ["name", "description"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3, "placeholder": "Description (optional)"}),
         }

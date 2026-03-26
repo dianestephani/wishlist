@@ -238,7 +238,7 @@ class EventModelTests(TestCase):
     def test_create_event(self):
         from datetime import date, time
         event = Event.objects.create(
-            created_by=self.user,
+            owner=self.user,
             title="Birthday Party",
             date=date(2026, 7, 15),
             start_time=time(18, 0),
@@ -247,12 +247,12 @@ class EventModelTests(TestCase):
             notes="Bring cake",
         )
         self.assertEqual(str(event), "Birthday Party")
-        self.assertEqual(event.created_by, self.user)
+        self.assertEqual(event.owner, self.user)
 
     def test_optional_fields(self):
         from datetime import date
         event = Event.objects.create(
-            created_by=self.user, title="Simple Event", date=date.today()
+            owner=self.user, title="Simple Event", date=date.today()
         )
         self.assertIsNone(event.start_time)
         self.assertIsNone(event.end_time)
@@ -261,15 +261,15 @@ class EventModelTests(TestCase):
 
     def test_ordering_by_date_desc(self):
         from datetime import date
-        e1 = Event.objects.create(created_by=self.user, title="Old", date=date(2026, 1, 1))
-        e2 = Event.objects.create(created_by=self.user, title="New", date=date(2026, 12, 1))
+        e1 = Event.objects.create(owner=self.user, title="Old", date=date(2026, 1, 1))
+        e2 = Event.objects.create(owner=self.user, title="New", date=date(2026, 12, 1))
         events = list(Event.objects.all())
         self.assertEqual(events[0], e2)
         self.assertEqual(events[1], e1)
 
     def test_cascade_delete_with_user(self):
         from datetime import date
-        Event.objects.create(created_by=self.user, title="Gone", date=date.today())
+        Event.objects.create(owner=self.user, title="Gone", date=date.today())
         self.user.delete()
         self.assertEqual(Event.objects.count(), 0)
 
@@ -282,30 +282,30 @@ class ActivityModelTests(TestCase):
 
     def test_create_activity(self):
         activity = Activity.objects.create(
-            created_by=self.user,
+            owner=self.user,
             title="Hiking",
             location="Seattle, WA",
             notes="Bring water",
         )
         self.assertEqual(str(activity), "Hiking")
-        self.assertEqual(activity.created_by, self.user)
+        self.assertEqual(activity.owner, self.user)
 
     def test_optional_fields(self):
         activity = Activity.objects.create(
-            created_by=self.user, title="Reading"
+            owner=self.user, title="Reading"
         )
         self.assertEqual(activity.location, "")
         self.assertEqual(activity.notes, "")
 
     def test_ordering_newest_first(self):
-        a1 = Activity.objects.create(created_by=self.user, title="First")
-        a2 = Activity.objects.create(created_by=self.user, title="Second")
+        a1 = Activity.objects.create(owner=self.user, title="First")
+        a2 = Activity.objects.create(owner=self.user, title="Second")
         activities = list(Activity.objects.all())
         self.assertEqual(activities[0], a2)
         self.assertEqual(activities[1], a1)
 
     def test_cascade_delete_with_user(self):
-        Activity.objects.create(created_by=self.user, title="Gone")
+        Activity.objects.create(owner=self.user, title="Gone")
         self.user.delete()
         self.assertEqual(Activity.objects.count(), 0)
 
@@ -652,7 +652,7 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Activities")
 
     def test_shows_wishlist_title_and_date(self):
-        wl = Wishlist.objects.create(user=self.user, title="My Birthday List")
+        wl = Wishlist.objects.create(owner=self.user, name="My Birthday List")
         response = self.client.get(self.url)
         self.assertContains(response, "My Birthday List")
 
@@ -663,7 +663,7 @@ class DashboardViewTests(TestCase):
     def test_shows_event_title_and_date(self):
         from datetime import date
         Event.objects.create(
-            created_by=self.user, title="Birthday Party", date=date.today()
+            owner=self.user, title="Birthday Party", date=date.today()
         )
         response = self.client.get(self.url)
         self.assertContains(response, "Birthday Party")
@@ -673,7 +673,7 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "No events yet")
 
     def test_shows_recent_activities(self):
-        Activity.objects.create(created_by=self.user, title="Hiking Trip")
+        Activity.objects.create(owner=self.user, title="Hiking Trip")
         response = self.client.get(self.url)
         self.assertContains(response, "Hiking Trip")
 
@@ -685,7 +685,7 @@ class DashboardViewTests(TestCase):
         other = User.objects.create_user(
             username="other", email="other@example.com", password="pass123"
         )
-        Wishlist.objects.create(user=other, title="Not My List")
+        Wishlist.objects.create(owner=other, name="Not My List")
         response = self.client.get(self.url)
         self.assertNotContains(response, "Not My List")
 
@@ -719,7 +719,7 @@ class EventsListViewTests(TestCase):
 
     def test_shows_user_events(self):
         from datetime import date
-        Event.objects.create(created_by=self.user, title="My Party", date=date.today())
+        Event.objects.create(owner=self.user, title="My Party", date=date.today())
         response = self.client.get(self.url)
         self.assertContains(response, "My Party")
 
@@ -728,7 +728,7 @@ class EventsListViewTests(TestCase):
         other = User.objects.create_user(
             username="other", email="other@example.com", password="pass123"
         )
-        Event.objects.create(created_by=other, title="Not My Party", date=date.today())
+        Event.objects.create(owner=other, title="Not My Party", date=date.today())
         response = self.client.get(self.url)
         self.assertNotContains(response, "Not My Party")
 
@@ -764,7 +764,7 @@ class ActivitiesListViewTests(TestCase):
 
     def test_shows_user_activities(self):
         Activity.objects.create(
-            created_by=self.user, title="Beach Day", location="Santa Cruz, CA"
+            owner=self.user, title="Beach Day", location="Santa Cruz, CA"
         )
         response = self.client.get(self.url)
         self.assertContains(response, "Beach Day")
@@ -802,18 +802,18 @@ class CreateWishlistViewTests(TestCase):
 
     def test_successful_create(self):
         response = self.client.post(self.url, {
-            "title": "New List", "description": "Test",
+            "name": "New List", "description": "Test",
             "item-title": "", "item-product_url": "", "item-price": "",
             "item-category": "", "item-brand": "", "item-store": "", "item-notes": "",
         })
         self.assertEqual(Wishlist.objects.count(), 1)
         wl = Wishlist.objects.first()
-        self.assertEqual(wl.title, "New List")
-        self.assertEqual(wl.user, self.user)
+        self.assertEqual(wl.name, "New List")
+        self.assertEqual(wl.owner, self.user)
 
     def test_shows_success_message(self):
         response = self.client.post(self.url, {
-            "title": "New List",
+            "name": "New List",
             "item-title": "", "item-product_url": "", "item-price": "",
             "item-category": "", "item-brand": "", "item-store": "", "item-notes": "",
         }, follow=True)
@@ -849,7 +849,7 @@ class CreateEventViewTests(TestCase):
         self.assertEqual(Event.objects.count(), 1)
         event = Event.objects.first()
         self.assertEqual(event.title, "My Party")
-        self.assertEqual(event.created_by, self.user)
+        self.assertEqual(event.owner, self.user)
         self.assertRedirects(response, reverse("wishlist:dashboard"))
 
     def test_invalid_times_rejected(self):
@@ -900,7 +900,7 @@ class CreateActivityViewTests(TestCase):
         self.assertEqual(Activity.objects.count(), 1)
         activity = Activity.objects.first()
         self.assertEqual(activity.title, "Beach Day")
-        self.assertEqual(activity.created_by, self.user)
+        self.assertEqual(activity.owner, self.user)
         self.assertRedirects(response, reverse("wishlist:dashboard"))
 
     def test_missing_location_rejected(self):
@@ -1730,7 +1730,7 @@ class DeleteAccountViewTests(TestCase):
         self.assertFalse(User.objects.filter(username="testuser").exists())
 
     def test_cascades_user_data(self):
-        Wishlist.objects.create(user=self.user, title="My List")
+        Wishlist.objects.create(owner=self.user, name="My List")
         WishlistItem.objects.create(user=self.user, title="My Item")
         self.client.post(self.url)
         self.assertEqual(Wishlist.objects.count(), 0)
@@ -1779,7 +1779,7 @@ class EditWishlistViewTests(TestCase):
             username="testuser", email="test@example.com", password="pass123"
         )
         self.client.login(username="testuser", password="pass123")
-        self.wl = Wishlist.objects.create(user=self.user, title="Old Title")
+        self.wl = Wishlist.objects.create(owner=self.user, name="Old Title")
         self.url = reverse("wishlist:edit_wishlist", args=[self.wl.pk])
 
     def test_requires_login(self):
@@ -1793,9 +1793,9 @@ class EditWishlistViewTests(TestCase):
         self.assertContains(response, "Old Title")
 
     def test_successful_update(self):
-        response = self.client.post(self.url, {"title": "New Title"})
+        response = self.client.post(self.url, {"name": "New Title"})
         self.wl.refresh_from_db()
-        self.assertEqual(self.wl.title, "New Title")
+        self.assertEqual(self.wl.name, "New Title")
 
     def test_other_user_gets_404(self):
         other = User.objects.create_user(username="other", email="other@example.com", password="pass123")
@@ -1810,7 +1810,7 @@ class DeleteWishlistViewTests(TestCase):
             username="testuser", email="test@example.com", password="pass123"
         )
         self.client.login(username="testuser", password="pass123")
-        self.wl = Wishlist.objects.create(user=self.user, title="Delete Me")
+        self.wl = Wishlist.objects.create(owner=self.user, name="Delete Me")
         self.url = reverse("wishlist:delete_wishlist", args=[self.wl.pk])
 
     def test_get_shows_confirmation(self):
@@ -1836,7 +1836,7 @@ class AddItemViewTests(TestCase):
             username="testuser", email="test@example.com", password="pass123"
         )
         self.client.login(username="testuser", password="pass123")
-        self.wl = Wishlist.objects.create(user=self.user, title="My List")
+        self.wl = Wishlist.objects.create(owner=self.user, name="My List")
         self.url = reverse("wishlist:add_item", args=[self.wl.pk])
 
     def test_requires_login(self):
@@ -1922,7 +1922,7 @@ class EditEventViewTests(TestCase):
         )
         self.client.login(username="testuser", password="pass123")
         self.event = Event.objects.create(
-            created_by=self.user, title="Old Event", date=date(2026, 7, 15),
+            owner=self.user, title="Old Event", date=date(2026, 7, 15),
             start_time=time(18, 0), end_time=time(22, 0), address="123 Main St",
         )
         self.url = reverse("wishlist:edit_event", args=[self.event.pk])
@@ -1962,7 +1962,7 @@ class DeleteEventViewTests(TestCase):
             username="testuser", email="test@example.com", password="pass123"
         )
         self.client.login(username="testuser", password="pass123")
-        self.event = Event.objects.create(created_by=self.user, title="Delete Me", date=date.today())
+        self.event = Event.objects.create(owner=self.user, title="Delete Me", date=date.today())
         self.url = reverse("wishlist:delete_event", args=[self.event.pk])
 
     def test_get_shows_confirmation(self):
@@ -1985,7 +1985,7 @@ class EditActivityViewTests(TestCase):
         )
         self.client.login(username="testuser", password="pass123")
         self.activity = Activity.objects.create(
-            created_by=self.user, title="Old Activity", location="Seattle, WA",
+            owner=self.user, title="Old Activity", location="Seattle, WA",
         )
         self.url = reverse("wishlist:edit_activity", args=[self.activity.pk])
 
@@ -2021,7 +2021,7 @@ class DeleteActivityViewTests(TestCase):
         )
         self.client.login(username="testuser", password="pass123")
         self.activity = Activity.objects.create(
-            created_by=self.user, title="Delete Me", location="Seattle, WA",
+            owner=self.user, title="Delete Me", location="Seattle, WA",
         )
         self.url = reverse("wishlist:delete_activity", args=[self.activity.pk])
 

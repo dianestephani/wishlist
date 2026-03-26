@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}{{ wishlist_obj.title }} - Wishlist{% endblock %}
+{% block title %}{{ wishlist_obj.name }} - Wishlist{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
-    <h1 class="page-title">{{ wishlist_obj.title }}</h1>
+    <h1 class="page-title">{{ wishlist_obj.name }}</h1>
     {% if wishlist_obj.description %}
         <p class="page-description">{{ wishlist_obj.description }}</p>
     {% endif %}

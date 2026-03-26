@@ -103,8 +103,8 @@
             <form method="post" action="{% url 'wishlist:create_wishlist' %}" enctype="multipart/form-data" novalidate>
                 {% csrf_token %}
                 <div class="form-group">
-                    <label for="wl-title">Title</label>
-                    <input type="text" name="title" id="wl-title" required>
+                    <label for="wl-name">Name</label>
+                    <input type="text" name="name" id="wl-name" required>
                 </div>
                 <div class="form-group">
                     <label for="wl-desc">Description</label>

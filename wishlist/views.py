@@ -19,9 +19,9 @@ SORT_OPTIONS = {
 
 @login_required
 def dashboard(request):
-    wishlists = Wishlist.objects.filter(user=request.user)[:5]
-    events = Event.objects.filter(created_by=request.user)[:5]
-    activities = Activity.objects.filter(created_by=request.user)[:5]
+    wishlists = Wishlist.objects.filter(owner=request.user)[:5]
+    events = Event.objects.filter(owner=request.user)[:5]
+    activities = Activity.objects.filter(owner=request.user)[:5]
 
     context = {
         "wishlists": wishlists,
@@ -42,13 +42,14 @@ def create_wishlist(request):
         item_valid = item_form.is_valid() if has_item_data else True
         if form.is_valid() and item_valid:
             wl = form.save(commit=False)
-            wl.user = request.user
+            wl.owner = request.user
             wl.save()
             if has_item_data and item_form.cleaned_data.get("title"):
                 item = item_form.save(commit=False)
                 item.user = request.user
+                item.wishlist = wl
                 item.save()
-            messages.success(request, f'Wishlist "{wl.title}" created!')
+            messages.success(request, f'Wishlist "{wl.name}" created!')
             return redirect("wishlist:wishlist_detail", wishlist_id=wl.pk)
     else:
         form = WishlistForm()
@@ -62,7 +63,7 @@ def create_event(request):
         form = EventForm(request.POST)
         if form.is_valid():
             event = form.save(commit=False)
-            event.created_by = request.user
+            event.owner = request.user
             event.save()
             messages.success(request, f'Event "{event.title}" created!')
             return redirect("wishlist:dashboard")
@@ -77,7 +78,7 @@ def create_activity(request):
         form = ActivityForm(request.POST)
         if form.is_valid():
             activity = form.save(commit=False)
-            activity.created_by = request.user
+            activity.owner = request.user
             activity.save()
             messages.success(request, f'Activity "{activity.title}" created!')
             return redirect("wishlist:dashboard")
@@ -88,20 +89,20 @@ def create_activity(request):
 
 @login_required
 def wishlist_detail(request, wishlist_id):
-    wl = get_object_or_404(Wishlist, pk=wishlist_id, user=request.user)
-    items = WishlistItem.objects.filter(user=request.user).select_related("purchase")
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, owner=request.user)
+    items = WishlistItem.objects.filter(wishlist=wl).select_related("purchase")
     context = {"wishlist_obj": wl, "items": items}
     return render(request, "wishlist/wishlist_detail.html", context)
 
 
 @login_required
 def edit_wishlist(request, wishlist_id):
-    wl = get_object_or_404(Wishlist, pk=wishlist_id, user=request.user)
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, owner=request.user)
     if request.method == "POST":
         form = WishlistForm(request.POST, instance=wl)
         if form.is_valid():
             form.save()
-            messages.success(request, f'Wishlist "{wl.title}" updated!')
+            messages.success(request, f'Wishlist "{wl.name}" updated!')
             return redirect("wishlist:wishlist_detail", wishlist_id=wl.pk)
     else:
         form = WishlistForm(instance=wl)
@@ -110,9 +111,9 @@ def edit_wishlist(request, wishlist_id):
 
 @login_required
 def delete_wishlist(request, wishlist_id):
-    wl = get_object_or_404(Wishlist, pk=wishlist_id, user=request.user)
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, owner=request.user)
     if request.method == "POST":
-        title = wl.title
+        title = wl.name
         wl.delete()
         messages.success(request, f'Wishlist "{title}" deleted.')
         return redirect("wishlist:dashboard")
@@ -121,12 +122,13 @@ def delete_wishlist(request, wishlist_id):
 
 @login_required
 def add_item(request, wishlist_id):
-    wl = get_object_or_404(Wishlist, pk=wishlist_id, user=request.user)
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, owner=request.user)
     if request.method == "POST":
         form = WishlistItemForm(request.POST, request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
             item.user = request.user
+            item.wishlist = wl
             item.save()
             messages.success(request, f'"{item.title}" added to your wishlist!')
             return redirect("wishlist:wishlist_detail", wishlist_id=wl.pk)
@@ -162,7 +164,7 @@ def delete_item(request, item_id):
 
 @login_required
 def edit_event(request, event_id):
-    event = get_object_or_404(Event, pk=event_id, created_by=request.user)
+    event = get_object_or_404(Event, pk=event_id, owner=request.user)
     if request.method == "POST":
         form = EventForm(request.POST, instance=event)
         if form.is_valid():
@@ -176,7 +178,7 @@ def edit_event(request, event_id):
 
 @login_required
 def delete_event(request, event_id):
-    event = get_object_or_404(Event, pk=event_id, created_by=request.user)
+    event = get_object_or_404(Event, pk=event_id, owner=request.user)
     if request.method == "POST":
         title = event.title
         event.delete()
@@ -187,7 +189,7 @@ def delete_event(request, event_id):
 
 @login_required
 def edit_activity(request, activity_id):
-    activity = get_object_or_404(Activity, pk=activity_id, created_by=request.user)
+    activity = get_object_or_404(Activity, pk=activity_id, owner=request.user)
     if request.method == "POST":
         form = ActivityForm(request.POST, instance=activity)
         if form.is_valid():
@@ -201,7 +203,7 @@ def edit_activity(request, activity_id):
 
 @login_required
 def delete_activity(request, activity_id):
-    activity = get_object_or_404(Activity, pk=activity_id, created_by=request.user)
+    activity = get_object_or_404(Activity, pk=activity_id, owner=request.user)
     if request.method == "POST":
         title = activity.title
         activity.delete()
@@ -244,19 +246,19 @@ def friends(request):
 
 @login_required
 def events_list(request):
-    events = Event.objects.filter(created_by=request.user)
+    events = Event.objects.filter(owner=request.user)
     return render(request, "wishlist/events.html", {"events": events})
 
 
 @login_required
 def event_detail(request, event_id):
-    event = get_object_or_404(Event, pk=event_id, created_by=request.user)
+    event = get_object_or_404(Event, pk=event_id, owner=request.user)
     return render(request, "wishlist/event_detail.html", {"event": event})
 
 
 @login_required
 def activities_list(request):
-    activities = Activity.objects.filter(created_by=request.user)
+    activities = Activity.objects.filter(owner=request.user)
     return render(request, "wishlist/activities.html", {"activities": activities})
 
 

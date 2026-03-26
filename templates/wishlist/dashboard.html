@@ -16,7 +16,7 @@
                     {% for wl in wishlists %}
                         <li>
                             <a href="{% url 'wishlist:wishlist_detail' wl.id %}" class="dashboard-card-item-link">
-                                <span class="dashboard-card-item-title">{{ wl.title }}</span>
+                                <span class="dashboard-card-item-title">{{ wl.name }}</span>
                                 <span class="dashboard-card-item-date">{{ wl.created_at|date:"M d, Y" }}</span>
                             </a>
                         </li>

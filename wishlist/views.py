@@ -1,10 +1,10 @@
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import RegistrationForm
-from .models import WishlistItem
+from .forms import PurchaseForm, RegistrationForm
+from .models import Purchase, WishlistItem
 
 SORT_OPTIONS = {
     "price_asc": "price",
@@ -20,7 +20,7 @@ def index(request):
     sort = request.GET.get("sort", "")
     order_by = SORT_OPTIONS.get(sort, "-created_at")
 
-    items = WishlistItem.objects.filter(user=request.user).order_by(order_by)
+    items = WishlistItem.objects.filter(user=request.user).select_related("purchase").order_by(order_by)
 
     context = {
         "items": items,
@@ -35,6 +35,30 @@ def index(request):
         ],
     }
     return render(request, "wishlist/index.html", context)
+
+
+@login_required
+def mark_purchased(request, item_id):
+    item = get_object_or_404(WishlistItem, pk=item_id)
+
+    if item.status == WishlistItem.Status.PURCHASED:
+        return redirect("wishlist:index")
+
+    if request.method == "POST":
+        form = PurchaseForm(request.POST)
+        if form.is_valid():
+            Purchase.objects.create(
+                item=item,
+                purchased_by=request.user,
+                message=form.cleaned_data["message"],
+            )
+            item.status = WishlistItem.Status.PURCHASED
+            item.save()
+            return redirect("wishlist:index")
+    else:
+        form = PurchaseForm()
+
+    return render(request, "wishlist/purchase.html", {"form": form, "item": item})
 
 
 def register_view(request):

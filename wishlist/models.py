@@ -40,3 +40,21 @@ class WishlistItem(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Purchase(models.Model):
+    item = models.OneToOneField(
+        WishlistItem,
+        on_delete=models.CASCADE,
+        related_name="purchase",
+    )
+    purchased_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="purchases",
+    )
+    message = models.TextField(blank=True)
+    purchased_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.item.title} purchased by {self.purchased_by}"

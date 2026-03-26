@@ -28,3 +28,20 @@ class RegistrationForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("A user with this email already exists.")
         return email
+
+
+class PurchaseForm(forms.Form):
+    confirm = forms.BooleanField(
+        required=True,
+        label=(
+            "I confirm that I have purchased this item. If I have not purchased it "
+            "and I click Purchased anyway, I understand that I am responsible for "
+            "contacting Diane and telling her personally that I lied about getting "
+            "her a birthday present."
+        ),
+    )
+    message = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3, "placeholder": "Leave a message (optional)"}),
+        label="Message",
+    )

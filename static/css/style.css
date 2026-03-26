@@ -255,3 +255,148 @@ footer {
     margin-top: 3rem;
     font-size: 1.1rem;
 }
+
+/* Purchased card */
+.card-purchased {
+    opacity: 0.7;
+    position: relative;
+}
+
+.card-purchased .card-title {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.card-purchased .card-price {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.purchased-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: #27ae60;
+    color: #fff;
+    padding: 0.2rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    z-index: 1;
+}
+
+.btn-purchased {
+    margin-top: auto;
+    padding: 0.5rem 0.75rem;
+    background: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-purchased:hover {
+    background: #1e8449;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 520px;
+    width: 90%;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal h2 {
+    margin-bottom: 0.25rem;
+}
+
+.modal-item-title {
+    color: #555;
+    margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+}
+
+.modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+}
+
+.checkbox-group span {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #555;
+}
+
+.modal .form-group textarea,
+.auth-form textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.btn-confirm-purchase {
+    width: 100%;
+    padding: 0.625rem;
+    background: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.btn-confirm-purchase:hover:not(:disabled) {
+    background: #1e8449;
+}
+
+.btn-confirm-purchase:disabled {
+    background: #bbb;
+    cursor: not-allowed;
+}

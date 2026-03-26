@@ -5,7 +5,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
-from .models import Purchase, WishlistItem
+from .models import ItemEvent, Purchase, WishlistItem
 
 User = get_user_model()
 
@@ -109,6 +109,54 @@ class PurchaseModelTests(TestCase):
         Purchase.objects.create(item=self.item, purchased_by=self.buyer)
         self.item.delete()
         self.assertEqual(Purchase.objects.count(), 0)
+
+
+class ItemEventModelTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="owner", email="owner@example.com", password="pass123"
+        )
+        self.actor = User.objects.create_user(
+            username="actor", email="actor@example.com", password="pass123"
+        )
+        self.item = WishlistItem.objects.create(user=self.owner, title="Gift")
+
+    def test_create_purchased_event(self):
+        event = ItemEvent.objects.create(
+            item=self.item,
+            event_type=ItemEvent.EventType.PURCHASED,
+            user=self.actor,
+            message="Got it!",
+        )
+        self.assertEqual(event.event_type, "purchased")
+        self.assertIn("Gift", str(event))
+        self.assertIn("actor@example.com", str(event))
+
+    def test_create_undone_event(self):
+        event = ItemEvent.objects.create(
+            item=self.item,
+            event_type=ItemEvent.EventType.UNDONE,
+            user=self.actor,
+        )
+        self.assertEqual(event.event_type, "undone")
+
+    def test_events_ordered_newest_first(self):
+        e1 = ItemEvent.objects.create(
+            item=self.item, event_type=ItemEvent.EventType.PURCHASED, user=self.actor,
+        )
+        e2 = ItemEvent.objects.create(
+            item=self.item, event_type=ItemEvent.EventType.UNDONE, user=self.actor,
+        )
+        events = list(ItemEvent.objects.all())
+        self.assertEqual(events[0], e2)
+        self.assertEqual(events[1], e1)
+
+    def test_cascade_delete_with_item(self):
+        ItemEvent.objects.create(
+            item=self.item, event_type=ItemEvent.EventType.PURCHASED, user=self.actor,
+        )
+        self.item.delete()
+        self.assertEqual(ItemEvent.objects.count(), 0)
 
 
 # ---------------------------------------------------------------------------
@@ -405,6 +453,13 @@ class MarkPurchasedViewTests(TestCase):
         self.assertEqual(purchase.purchased_by, self.user)
         self.assertEqual(purchase.message, "Got it!")
 
+    def test_purchase_creates_event(self):
+        self.client.post(self.url, {"confirm": True, "message": "Bought it"})
+        event = ItemEvent.objects.get(item=self.item)
+        self.assertEqual(event.event_type, ItemEvent.EventType.PURCHASED)
+        self.assertEqual(event.user, self.user)
+        self.assertEqual(event.message, "Bought it")
+
     def test_purchase_without_confirm_fails(self):
         response = self.client.post(self.url, {"confirm": False})
         self.assertEqual(response.status_code, 200)
@@ -462,6 +517,12 @@ class UndoPurchaseViewTests(TestCase):
         self.assertEqual(self.item.status, WishlistItem.Status.AVAILABLE)
         self.assertFalse(Purchase.objects.filter(item=self.item).exists())
 
+    def test_undo_creates_event(self):
+        self.client.post(self.url, {"message": "My bad"})
+        event = ItemEvent.objects.get(item=self.item, event_type=ItemEvent.EventType.UNDONE)
+        self.assertEqual(event.user, self.user)
+        self.assertEqual(event.message, "My bad")
+
     def test_undo_without_message(self):
         response = self.client.post(self.url, {})
         self.assertRedirects(response, reverse("wishlist:index"))
@@ -476,5 +537,92 @@ class UndoPurchaseViewTests(TestCase):
 
     def test_nonexistent_item_returns_404(self):
         url = reverse("wishlist:undo_purchase", args=[99999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# Item detail view tests
+# ---------------------------------------------------------------------------
+class ItemDetailViewTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="owner", email="owner@example.com", password="pass123"
+        )
+        self.item = WishlistItem.objects.create(
+            user=self.owner,
+            title="Detail Item",
+            price=Decimal("75.00"),
+            category="Tech",
+            product_url="https://example.com/product",
+        )
+        self.url = reverse("wishlist:item_detail", args=[self.item.pk])
+
+    def test_requires_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_displays_item_info(self):
+        self.client.login(username="owner", password="pass123")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/item_detail.html")
+        self.assertContains(response, "Detail Item")
+        self.assertContains(response, "75.00")
+        self.assertContains(response, "Tech")
+        self.assertContains(response, "Visit Store")
+
+    def test_regular_user_cannot_see_event_log(self):
+        regular = User.objects.create_user(
+            username="regular", email="regular@example.com", password="pass123"
+        )
+        ItemEvent.objects.create(
+            item=self.item,
+            event_type=ItemEvent.EventType.PURCHASED,
+            user=regular,
+            message="Bought it",
+        )
+        self.client.login(username="regular", password="pass123")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Activity Log")
+        self.assertNotContains(response, "Bought it")
+
+    def test_superuser_can_see_event_log(self):
+        admin = User.objects.create_superuser(
+            username="admin", email="admin@example.com", password="pass123"
+        )
+        ItemEvent.objects.create(
+            item=self.item,
+            event_type=ItemEvent.EventType.PURCHASED,
+            user=self.owner,
+            message="Got this one",
+        )
+        ItemEvent.objects.create(
+            item=self.item,
+            event_type=ItemEvent.EventType.UNDONE,
+            user=self.owner,
+            message="Never mind",
+        )
+        self.client.login(username="admin", password="pass123")
+        response = self.client.get(self.url)
+        self.assertContains(response, "Activity Log")
+        self.assertContains(response, "Got this one")
+        self.assertContains(response, "Never mind")
+        self.assertContains(response, "Marked as Purchased")
+        self.assertContains(response, "Purchase Undone")
+
+    def test_superuser_sees_empty_log(self):
+        User.objects.create_superuser(
+            username="admin", email="admin@example.com", password="pass123"
+        )
+        self.client.login(username="admin", password="pass123")
+        response = self.client.get(self.url)
+        self.assertContains(response, "Activity Log")
+        self.assertContains(response, "No activity yet")
+
+    def test_nonexistent_item_returns_404(self):
+        self.client.login(username="owner", password="pass123")
+        url = reverse("wishlist:item_detail", args=[99999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

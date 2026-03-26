@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block title %}{{ item.title }} - Wishlist{% endblock %}
+
+{% block content %}
+<div class="item-detail">
+    <a href="{% url 'wishlist:index' %}" class="back-link">&larr; Back to Wishlist</a>
+
+    <div class="item-detail-header">
+        {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.title }}" class="item-detail-image">
+        {% endif %}
+
+        <div class="item-detail-info">
+            <h1>{{ item.title }}</h1>
+
+            {% if item.price is not None %}
+                <p class="card-price">${{ item.price }}</p>
+            {% endif %}
+
+            <div class="card-details">
+                {% if item.category %}
+                    <span class="card-tag">{{ item.category }}</span>
+                {% endif %}
+                {% if item.brand %}
+                    <span class="card-tag">{{ item.brand }}</span>
+                {% endif %}
+                {% if item.store %}
+                    <span class="card-tag">{{ item.store }}</span>
+                {% endif %}
+            </div>
+
+            {% if item.product_url %}
+                <a href="{{ item.product_url }}" target="_blank" rel="noopener noreferrer" class="card-link">
+                    Visit Store
+                </a>
+            {% endif %}
+
+            <p class="item-status item-status-{{ item.status }}">
+                Status: {{ item.get_status_display }}
+            </p>
+        </div>
+    </div>
+
+    {% if events is not None %}
+        <div class="event-log">
+            <h2>Activity Log</h2>
+
+            {% if events %}
+                <table class="event-table">
+                    <thead>
+                        <tr>
+                            <th>Date &amp; Time (PT)</th>
+                            <th>Event</th>
+                            <th>User</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% timezone "America/Los_Angeles" %}
+                        {% for event in events %}
+                            <tr class="event-row-{{ event.event_type }}">
+                                <td>{{ event.created_at|date:"M d, Y g:i A T" }}</td>
+                                <td>{{ event.get_event_type_display }}</td>
+                                <td>{{ event.user.username }}</td>
+                                <td>{{ event.message|default:"—" }}</td>
+                            </tr>
+                        {% endfor %}
+                        {% endtimezone %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-state">No activity yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

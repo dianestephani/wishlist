@@ -51,11 +51,9 @@
                         {% endif %}
                     </div>
 
-                    {% if item.product_url %}
-                        <a href="{{ item.product_url }}" target="_blank" rel="noopener noreferrer" class="card-link">
-                            View Product
-                        </a>
-                    {% endif %}
+                    <a href="{% url 'wishlist:item_detail' item.id %}" class="card-link">
+                        View Product
+                    </a>
 
                     {% if item.status == "available" %}
                         <button type="button" class="btn-purchased" onclick="openPurchaseModal({{ item.id }}, '{{ item.title|escapejs }}')">

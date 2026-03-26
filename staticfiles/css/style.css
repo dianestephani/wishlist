@@ -334,6 +334,11 @@ strong {
     box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.2);
 }
 
+.form-group input[type="file"] {
+    padding: 0.4rem;
+    font-size: 0.85rem;
+}
+
 .form-group select option {
     background: #1a0f23;
     color: var(--text);
@@ -625,6 +630,25 @@ strong {
     align-items: center;
     justify-content: center;
     z-index: 100;
+    transition: opacity 0.25s;
+}
+
+.modal-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-hidden .modal {
+    transform: translateY(16px) scale(0.97);
+}
+
+.modal-visible .modal {
+    transform: translateY(0) scale(1);
 }
 
 .modal {
@@ -638,6 +662,36 @@ strong {
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    transition: transform 0.25s;
+}
+
+.form-row {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.form-row > div {
+    flex: 1;
+}
+
+.btn-modal-submit {
+    width: 100%;
+    padding: 0.65rem;
+    background: linear-gradient(135deg, var(--pink) 0%, var(--magenta) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.75rem;
+    transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-modal-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px var(--pink-glow);
 }
 
 .modal h2 {
@@ -906,6 +960,16 @@ strong {
     min-width: 200px;
     z-index: 60;
     overflow: hidden;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.create-menu-open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 .create-menu a {

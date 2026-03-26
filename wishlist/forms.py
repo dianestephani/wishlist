@@ -2,6 +2,8 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 
+from .models import Activity, Event, Wishlist
+
 User = get_user_model()
 
 
@@ -32,7 +34,6 @@ class RegistrationForm(UserCreationForm):
 
 class WishlistForm(forms.ModelForm):
     class Meta:
-        from .models import Wishlist
         model = Wishlist
         fields = ["title", "description"]
         widgets = {
@@ -42,27 +43,48 @@ class WishlistForm(forms.ModelForm):
 
 class EventForm(forms.ModelForm):
     class Meta:
-        from .models import Event
         model = Event
         fields = ["title", "date", "start_time", "end_time", "address", "notes"]
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
             "start_time": forms.TimeInput(attrs={"type": "time"}),
             "end_time": forms.TimeInput(attrs={"type": "time"}),
-            "address": forms.TextInput(attrs={"placeholder": "Address (optional)"}),
+            "address": forms.TextInput(attrs={"placeholder": "123 Main St, City, State"}),
             "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Notes (optional)"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["title"].required = True
+        self.fields["date"].required = True
+        self.fields["start_time"].required = True
+        self.fields["end_time"].required = True
+        self.fields["address"].required = True
+        self.fields["notes"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_time = cleaned_data.get("start_time")
+        end_time = cleaned_data.get("end_time")
+        if start_time and end_time and end_time <= start_time:
+            self.add_error("end_time", "End time must be after start time.")
+        return cleaned_data
 
 
 class ActivityForm(forms.ModelForm):
     class Meta:
-        from .models import Activity
         model = Activity
         fields = ["title", "location", "notes"]
         widgets = {
-            "location": forms.TextInput(attrs={"placeholder": "City, State (optional)"}),
+            "location": forms.TextInput(attrs={"placeholder": "City, State"}),
             "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Notes (optional)"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["title"].required = True
+        self.fields["location"].required = True
+        self.fields["notes"].required = False
 
 
 class PurchaseForm(forms.Form):

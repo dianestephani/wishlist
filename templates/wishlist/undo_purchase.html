@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Undo Purchase - Wishlist{% endblock %}
+
+{% block content %}
+<div class="auth-form">
+    <h1>Just Kidding!</h1>
+    <p><strong>{{ item.title }}</strong></p>
+    <p class="modal-description">Accidentally hit 'purchased' without actually buying? No problem! Just click the Submit button so I know exactly who lied to me.</p>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+            {{ form.message }}
+        </div>
+
+        <button type="submit">Submit Your Shame</button>
+    </form>
+
+    <p class="auth-link"><a href="{% url 'wishlist:index' %}">Back to Wishlist</a></p>
+</div>
+{% endblock %}

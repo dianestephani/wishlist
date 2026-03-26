@@ -45,3 +45,11 @@ class PurchaseForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 3, "placeholder": "Leave a message (optional)"}),
         label="Message",
     )
+
+
+class UndoPurchaseForm(forms.Form):
+    message = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3, "placeholder": "Explain yourself (optional)"}),
+        label="Message",
+    )

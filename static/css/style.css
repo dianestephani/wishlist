@@ -400,3 +400,42 @@ footer {
     background: #bbb;
     cursor: not-allowed;
 }
+
+.modal-description {
+    color: #555;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+}
+
+.btn-undo {
+    margin-top: auto;
+    padding: 0.5rem 0.75rem;
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-undo:hover {
+    background: #c0392b;
+}
+
+.btn-shame {
+    width: 100%;
+    padding: 0.625rem;
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.btn-shame:hover {
+    background: #c0392b;
+}

@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "wishlist_app/wsgi.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/staticfiles/$1"
+    },
+    {
+      "src": "/media/(.*)",
+      "dest": "/media/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "wishlist_app/wsgi.py"
+    }
+  ]
+}

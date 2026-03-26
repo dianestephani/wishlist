@@ -87,3 +87,10 @@ AUTH_USER_MODEL = "wishlist.User"
 LOGIN_URL = "wishlist:login"
 LOGIN_REDIRECT_URL = "wishlist:index"
 LOGOUT_REDIRECT_URL = "wishlist:login"
+
+# Resend email configuration
+import os
+
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "wishlist@example.com")
+NOTIFICATION_TO_EMAIL = os.environ.get("NOTIFICATION_TO_EMAIL", "")

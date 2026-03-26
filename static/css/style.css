@@ -1452,6 +1452,15 @@ strong {
 /* ===== Dashboard friends ===== */
 .dashboard-friends {
     margin-top: 1.5rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-shadow);
+    padding: 1.5rem;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
 }
 
 .dashboard-friends-header {
@@ -1464,6 +1473,19 @@ strong {
 .dashboard-friends-header h2 {
     color: var(--pink-light);
     font-size: 1.1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-friends .empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 0.25rem;
 }
 
 .friends-row {

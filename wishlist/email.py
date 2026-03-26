@@ -1,5 +1,6 @@
 import logging
 
+import resend
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -10,8 +11,6 @@ def _send_email(subject, html_body):
     if not settings.RESEND_API_KEY or not settings.NOTIFICATION_TO_EMAIL:
         logger.warning("Resend not configured — skipping email: %s", subject)
         return None
-
-    import resend
 
     resend.api_key = settings.RESEND_API_KEY
 

@@ -255,6 +255,22 @@ footer {
     color: var(--text-muted);
 }
 
+.welcome-message {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-shadow);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.welcome-message p {
+    color: var(--text);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
 .sort-form select {
     padding: 0.4rem 0.6rem;
     border: 1px solid rgba(255, 255, 255, 0.15);

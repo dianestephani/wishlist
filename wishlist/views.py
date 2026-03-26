@@ -264,24 +264,8 @@ def activities_list(request):
 
 @login_required
 def index(request):
-    sort = request.GET.get("sort", "")
-    order_by = SORT_OPTIONS.get(sort, "-created_at")
-
-    items = WishlistItem.objects.filter(user=request.user).select_related("purchase").order_by(order_by)
-
-    context = {
-        "items": items,
-        "current_sort": sort,
-        "sort_options": [
-            ("", "Newest"),
-            ("price_asc", "Price: Low to High"),
-            ("price_desc", "Price: High to Low"),
-            ("category", "Category"),
-            ("brand", "Brand"),
-            ("store", "Store"),
-        ],
-    }
-    return render(request, "wishlist/index.html", context)
+    wishlists = Wishlist.objects.filter(owner=request.user)
+    return render(request, "wishlist/index.html", {"wishlists": wishlists})
 
 
 @login_required

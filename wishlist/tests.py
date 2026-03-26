@@ -932,71 +932,41 @@ class IndexViewTests(TestCase):
         response = self.client.get(self.url)
         self.assertRedirects(response, f"{reverse('wishlist:login')}?next={self.url}")
 
-    def test_displays_user_items(self):
-        WishlistItem.objects.create(
-            user=self.user, title="My Item", price=Decimal("29.99")
-        )
+    def test_displays_user_wishlists(self):
+        Wishlist.objects.create(owner=self.user, name="Birthday List")
         response = self.client.get(self.url)
-        self.assertContains(response, "My Item")
-        self.assertContains(response, "29.99")
+        self.assertContains(response, "Birthday List")
 
-    def test_does_not_display_other_users_items(self):
+    def test_does_not_display_other_users_wishlists(self):
         other = User.objects.create_user(
             username="other", email="other@example.com", password="pass123"
         )
-        WishlistItem.objects.create(user=other, title="Not Mine")
+        Wishlist.objects.create(owner=other, name="Not Mine")
         response = self.client.get(self.url)
         self.assertNotContains(response, "Not Mine")
 
     def test_empty_state(self):
         response = self.client.get(self.url)
-        self.assertContains(response, "Your wishlist is empty")
+        self.assertContains(response, "No wishlists yet")
 
-    def test_sort_by_price_asc(self):
-        WishlistItem.objects.create(user=self.user, title="Expensive", price=Decimal("100.00"))
-        WishlistItem.objects.create(user=self.user, title="Cheap", price=Decimal("10.00"))
-        response = self.client.get(self.url + "?sort=price_asc")
-        content = response.content.decode()
-        self.assertLess(content.index("Cheap"), content.index("Expensive"))
-
-    def test_sort_by_price_desc(self):
-        WishlistItem.objects.create(user=self.user, title="Expensive", price=Decimal("100.00"))
-        WishlistItem.objects.create(user=self.user, title="Cheap", price=Decimal("10.00"))
-        response = self.client.get(self.url + "?sort=price_desc")
-        content = response.content.decode()
-        self.assertLess(content.index("Expensive"), content.index("Cheap"))
-
-    def test_sort_by_category(self):
-        WishlistItem.objects.create(user=self.user, title="Zebra", category="Z")
-        WishlistItem.objects.create(user=self.user, title="Apple", category="A")
-        response = self.client.get(self.url + "?sort=category")
-        content = response.content.decode()
-        self.assertLess(content.index("Apple"), content.index("Zebra"))
-
-    def test_invalid_sort_falls_back_to_default(self):
-        WishlistItem.objects.create(user=self.user, title="Item")
-        response = self.client.get(self.url + "?sort=invalid")
-        self.assertEqual(response.status_code, 200)
-
-    def test_purchased_item_shows_badge(self):
-        WishlistItem.objects.create(
-            user=self.user, title="Got It", status=WishlistItem.Status.PURCHASED
-        )
+    def test_shows_item_count(self):
+        wl = Wishlist.objects.create(owner=self.user, name="My List")
+        WishlistItem.objects.create(user=self.user, wishlist=wl, title="Item 1")
+        WishlistItem.objects.create(user=self.user, wishlist=wl, title="Item 2")
         response = self.client.get(self.url)
-        self.assertContains(response, "Purchased")
-        self.assertContains(response, "card-purchased")
+        self.assertContains(response, "2 items")
 
-    def test_available_item_shows_purchase_button(self):
-        WishlistItem.objects.create(user=self.user, title="Want It")
+    def test_has_action_buttons(self):
+        wl = Wishlist.objects.create(owner=self.user, name="My List")
         response = self.client.get(self.url)
-        self.assertContains(response, "purchased this!")
+        self.assertContains(response, "Add Item")
+        self.assertContains(response, "Edit")
+        self.assertContains(response, "Delete")
 
-    def test_purchased_item_shows_undo_button(self):
-        WishlistItem.objects.create(
-            user=self.user, title="Undo Me", status=WishlistItem.Status.PURCHASED
-        )
+    def test_wishlist_links_to_detail(self):
+        wl = Wishlist.objects.create(owner=self.user, name="My List")
         response = self.client.get(self.url)
-        self.assertContains(response, "Just kidding!")
+        self.assertContains(response, reverse("wishlist:wishlist_detail", args=[wl.pk]))
 
 
 # ---------------------------------------------------------------------------

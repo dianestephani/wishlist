@@ -41,11 +41,28 @@ class ItemEventInline(admin.TabularInline):
 
 @admin.register(WishlistItem)
 class WishlistItemAdmin(admin.ModelAdmin):
-    list_display = ("title", "user", "price", "store", "status", "created_at")
-    list_filter = ("status", "category", "store")
-    search_fields = ("title", "brand", "store")
+    list_display = ("title", "price", "status", "category", "brand", "store", "user", "created_at")
+    list_filter = ("status", "category", "brand", "store")
+    search_fields = ("title", "category", "brand", "store", "notes")
+    list_editable = ("price", "status", "category", "brand", "store")
+    list_per_page = 25
     readonly_fields = ("created_at",)
     inlines = [ItemViewInline, StoreClickInline, ItemEventInline]
+
+    fieldsets = (
+        (None, {
+            "fields": ("user", "title", "status"),
+        }),
+        ("Product Details", {
+            "fields": ("price", "category", "brand", "store", "product_url"),
+        }),
+        ("Media & Notes", {
+            "fields": ("image", "notes"),
+        }),
+        ("Metadata", {
+            "fields": ("created_at",),
+        }),
+    )
 
 
 @admin.register(Purchase)

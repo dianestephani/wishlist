@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -14,6 +15,20 @@ SORT_OPTIONS = {
     "brand": "brand",
     "store": "store",
 }
+
+
+@login_required
+def dashboard(request):
+    wishlist_items = WishlistItem.objects.filter(user=request.user).select_related("purchase")[:6]
+    recent_events = ItemEvent.objects.filter(user=request.user).select_related("item")[:5]
+    recent_purchases = Purchase.objects.filter(purchased_by=request.user).select_related("item")[:5]
+
+    context = {
+        "wishlist_items": wishlist_items,
+        "recent_events": recent_events,
+        "recent_purchases": recent_purchases,
+    }
+    return render(request, "wishlist/dashboard.html", context)
 
 
 @login_required
@@ -99,6 +114,7 @@ def mark_purchased(request, item_id):
             item.status = WishlistItem.Status.PURCHASED
             item.save()
             send_purchased_email(request.user, item, message)
+            messages.success(request, f'"{item.title}" has been marked as purchased. Thank you!')
             return redirect("wishlist:index")
     else:
         form = PurchaseForm()
@@ -127,6 +143,7 @@ def undo_purchase(request, item_id):
             item.status = WishlistItem.Status.AVAILABLE
             item.save()
             send_undo_email(request.user, item, message)
+            messages.info(request, f'"{item.title}" has been reverted to available.')
             return redirect("wishlist:index")
     else:
         form = UndoPurchaseForm()
@@ -136,14 +153,15 @@ def undo_purchase(request, item_id):
 
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect("wishlist:index")
+        return redirect("wishlist:dashboard")
 
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("wishlist:index")
+            messages.success(request, f"Welcome, {user.first_name or user.username}! Your account has been created.")
+            return redirect("wishlist:dashboard")
     else:
         form = RegistrationForm()
 
@@ -152,13 +170,15 @@ def register_view(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect("wishlist:index")
+        return redirect("wishlist:dashboard")
 
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            login(request, form.get_user())
-            return redirect("wishlist:index")
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, f"Welcome back, {user.first_name or user.username}!")
+            return redirect("wishlist:dashboard")
     else:
         form = AuthenticationForm()
 
@@ -167,4 +187,5 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
+    messages.info(request, "You have been logged out.")
     return redirect("wishlist:login")

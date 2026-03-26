@@ -137,7 +137,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "wishlist.User"
 
 LOGIN_URL = "wishlist:login"
-LOGIN_REDIRECT_URL = "wishlist:index"
+LOGIN_REDIRECT_URL = "wishlist:dashboard"
 LOGOUT_REDIRECT_URL = "wishlist:login"
 
 # Resend email configuration

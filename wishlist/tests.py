@@ -329,8 +329,19 @@ class RegisterViewTests(TestCase):
             "password1": "securePass99!",
             "password2": "securePass99!",
         })
-        self.assertRedirects(response, reverse("wishlist:index"))
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
         self.assertTrue(User.objects.filter(username="newuser").exists())
+
+    def test_successful_registration_shows_message(self):
+        response = self.client.post(self.url, {
+            "username": "msguser",
+            "first_name": "Msg",
+            "last_name": "User",
+            "email": "msg@example.com",
+            "password1": "securePass99!",
+            "password2": "securePass99!",
+        }, follow=True)
+        self.assertContains(response, "Welcome")
 
     def test_registration_logs_user_in(self):
         self.client.post(self.url, {
@@ -353,7 +364,7 @@ class RegisterViewTests(TestCase):
         User.objects.create_user(username="u", email="u@e.com", password="pass123")
         self.client.login(username="u", password="pass123")
         response = self.client.get(self.url)
-        self.assertRedirects(response, reverse("wishlist:index"))
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
 
 
 class LoginViewTests(TestCase):
@@ -373,7 +384,14 @@ class LoginViewTests(TestCase):
             "username": "testuser",
             "password": "pass123",
         })
-        self.assertRedirects(response, reverse("wishlist:index"))
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
+
+    def test_successful_login_shows_message(self):
+        response = self.client.post(self.url, {
+            "username": "testuser",
+            "password": "pass123",
+        }, follow=True)
+        self.assertContains(response, "Welcome back")
 
     def test_invalid_login(self):
         response = self.client.post(self.url, {
@@ -386,7 +404,7 @@ class LoginViewTests(TestCase):
     def test_authenticated_user_redirected(self):
         self.client.login(username="testuser", password="pass123")
         response = self.client.get(self.url)
-        self.assertRedirects(response, reverse("wishlist:index"))
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
 
 
 class LogoutViewTests(TestCase):
@@ -400,11 +418,100 @@ class LogoutViewTests(TestCase):
         response = self.client.get(reverse("wishlist:logout"))
         self.assertRedirects(response, reverse("wishlist:login"))
 
+    def test_logout_shows_message(self):
+        self.client.login(username="testuser", password="pass123")
+        response = self.client.get(reverse("wishlist:logout"), follow=True)
+        self.assertContains(response, "logged out")
+
     def test_logout_clears_session(self):
         self.client.login(username="testuser", password="pass123")
         self.client.get(reverse("wishlist:logout"))
-        response = self.client.get(reverse("wishlist:index"))
-        self.assertRedirects(response, f"{reverse('wishlist:login')}?next=/")
+        response = self.client.get(reverse("wishlist:dashboard"))
+        self.assertRedirects(response, f"{reverse('wishlist:login')}?next={reverse('wishlist:dashboard')}")
+
+
+# ---------------------------------------------------------------------------
+# Dashboard view tests
+# ---------------------------------------------------------------------------
+class DashboardViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:dashboard")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertRedirects(response, f"{reverse('wishlist:login')}?next={self.url}")
+
+    def test_renders_dashboard_template(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/dashboard.html")
+
+    def test_shows_welcome_message(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Welcome")
+
+    def test_shows_wishlists_section(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Wishlists")
+
+    def test_shows_events_section(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Events")
+
+    def test_shows_activities_section(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Activities")
+
+    def test_shows_wishlist_items(self):
+        WishlistItem.objects.create(user=self.user, title="Dashboard Item")
+        response = self.client.get(self.url)
+        self.assertContains(response, "Dashboard Item")
+
+    def test_shows_empty_state_when_no_items(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No items yet")
+
+    def test_shows_recent_events(self):
+        item = WishlistItem.objects.create(user=self.user, title="Event Item")
+        ItemEvent.objects.create(
+            item=item, event_type=ItemEvent.EventType.PURCHASED, user=self.user
+        )
+        response = self.client.get(self.url)
+        self.assertContains(response, "Event Item")
+        self.assertContains(response, "Marked as Purchased")
+
+    def test_shows_empty_events(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No events yet")
+
+    def test_shows_recent_purchases(self):
+        item = WishlistItem.objects.create(user=self.user, title="Bought Item")
+        Purchase.objects.create(item=item, purchased_by=self.user, message="Great find")
+        response = self.client.get(self.url)
+        self.assertContains(response, "Bought Item")
+        self.assertContains(response, "Great find")
+
+    def test_shows_empty_activities(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No activities yet")
+
+    def test_does_not_show_other_users_items(self):
+        other = User.objects.create_user(
+            username="other", email="other@example.com", password="pass123"
+        )
+        WishlistItem.objects.create(user=other, title="Not My Item")
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Not My Item")
+
+    def test_has_view_all_link(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, reverse("wishlist:index"))
+        self.assertContains(response, "View All")
 
 
 # ---------------------------------------------------------------------------
@@ -421,7 +528,7 @@ class IndexViewTests(TestCase):
     def test_requires_login(self):
         self.client.logout()
         response = self.client.get(self.url)
-        self.assertRedirects(response, f"{reverse('wishlist:login')}?next=/")
+        self.assertRedirects(response, f"{reverse('wishlist:login')}?next={self.url}")
 
     def test_displays_user_items(self):
         WishlistItem.objects.create(
@@ -523,6 +630,10 @@ class MarkPurchasedViewTests(TestCase):
         self.assertEqual(purchase.purchased_by, self.user)
         self.assertEqual(purchase.message, "Got it!")
 
+    def test_successful_purchase_shows_message(self):
+        response = self.client.post(self.url, {"confirm": True}, follow=True)
+        self.assertContains(response, "marked as purchased")
+
     def test_purchase_creates_event(self):
         self.client.post(self.url, {"confirm": True, "message": "Bought it"})
         event = ItemEvent.objects.get(item=self.item)
@@ -596,6 +707,10 @@ class UndoPurchaseViewTests(TestCase):
         self.item.refresh_from_db()
         self.assertEqual(self.item.status, WishlistItem.Status.AVAILABLE)
         self.assertFalse(Purchase.objects.filter(item=self.item).exists())
+
+    def test_successful_undo_shows_message(self):
+        response = self.client.post(self.url, {"message": "Sorry!"}, follow=True)
+        self.assertContains(response, "reverted to available")
 
     def test_undo_creates_event(self):
         self.client.post(self.url, {"message": "My bad"})

@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from .email import send_purchased_email, send_undo_email
 from .forms import ActivityForm, EventForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
-from .models import Activity, Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
+from .models import Activity, Event, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 User = get_user_model()
 
@@ -2003,3 +2003,104 @@ class DeleteActivityViewTests(TestCase):
         response = self.client.post(self.url)
         self.assertRedirects(response, reverse("wishlist:activities"))
         self.assertEqual(Activity.objects.count(), 0)
+
+
+# ---------------------------------------------------------------------------
+# Friendship model tests
+# ---------------------------------------------------------------------------
+class FriendshipModelTests(TestCase):
+    def setUp(self):
+        self.user1 = User.objects.create_user(
+            username="user1", email="user1@example.com", password="pass123"
+        )
+        self.user2 = User.objects.create_user(
+            username="user2", email="user2@example.com", password="pass123"
+        )
+
+    def test_create_friendship(self):
+        f = Friendship.objects.create(user=self.user1, friend=self.user2)
+        self.assertEqual(f.user, self.user1)
+        self.assertEqual(f.friend, self.user2)
+        self.assertIn("user1", str(f))
+        self.assertIn("user2", str(f))
+
+    def test_duplicate_friendship_rejected(self):
+        Friendship.objects.create(user=self.user1, friend=self.user2)
+        with self.assertRaises(Exception):
+            Friendship.objects.create(user=self.user1, friend=self.user2)
+
+    def test_reverse_friendship_allowed(self):
+        Friendship.objects.create(user=self.user1, friend=self.user2)
+        Friendship.objects.create(user=self.user2, friend=self.user1)
+        self.assertEqual(Friendship.objects.count(), 2)
+
+    def test_ordering_newest_first(self):
+        f1 = Friendship.objects.create(user=self.user1, friend=self.user2)
+        f2 = Friendship.objects.create(user=self.user2, friend=self.user1)
+        friendships = list(Friendship.objects.all())
+        self.assertEqual(friendships[0], f2)
+        self.assertEqual(friendships[1], f1)
+
+    def test_cascade_delete_user(self):
+        Friendship.objects.create(user=self.user1, friend=self.user2)
+        self.user1.delete()
+        self.assertEqual(Friendship.objects.count(), 0)
+
+    def test_cascade_delete_friend(self):
+        Friendship.objects.create(user=self.user1, friend=self.user2)
+        self.user2.delete()
+        self.assertEqual(Friendship.objects.count(), 0)
+
+
+# ---------------------------------------------------------------------------
+# Auto-friend signal tests
+# ---------------------------------------------------------------------------
+class AutoFriendSignalTests(TestCase):
+    def setUp(self):
+        self.diane = User.objects.create_user(
+            username="diane", email="diane.stephani@gmail.com", password="pass123"
+        )
+
+    def test_new_user_auto_friends_diane(self):
+        new_user = User.objects.create_user(
+            username="newuser", email="new@example.com", password="pass123"
+        )
+        self.assertTrue(
+            Friendship.objects.filter(user=new_user, friend=self.diane).exists()
+        )
+
+    def test_diane_does_not_self_friend(self):
+        self.assertFalse(
+            Friendship.objects.filter(user=self.diane, friend=self.diane).exists()
+        )
+
+    def test_no_duplicate_on_save(self):
+        new_user = User.objects.create_user(
+            username="newuser", email="new@example.com", password="pass123"
+        )
+        new_user.first_name = "Updated"
+        new_user.save()
+        self.assertEqual(
+            Friendship.objects.filter(user=new_user, friend=self.diane).count(), 1
+        )
+
+    def test_signal_skips_if_diane_not_found(self):
+        self.diane.delete()
+        new_user = User.objects.create_user(
+            username="newuser", email="new@example.com", password="pass123"
+        )
+        self.assertEqual(Friendship.objects.count(), 0)
+
+    def test_registration_auto_friends_diane(self):
+        response = self.client.post(reverse("wishlist:register"), {
+            "username": "reguser",
+            "first_name": "Reg",
+            "last_name": "User",
+            "email": "reg@example.com",
+            "password1": "securePass99!",
+            "password2": "securePass99!",
+        })
+        reg_user = User.objects.get(username="reguser")
+        self.assertTrue(
+            Friendship.objects.filter(user=reg_user, friend=self.diane).exists()
+        )

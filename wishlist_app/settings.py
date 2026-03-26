@@ -90,12 +90,10 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 STORAGES = {
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-# WhiteNoise serves static files in production even when DEBUG=False.
-# Also allow it to find files via STATICFILES_FINDERS during development.
 WHITENOISE_USE_FINDERS = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

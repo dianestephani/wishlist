@@ -44,7 +44,7 @@
                             <a href="#" onclick="openCreateModal('activity'); return false;">Create Activity</a>
                         </div>
                     </div>
-                    <span class="nav-user">{{ user.username }}</span>
+                    <a href="{% url 'wishlist:profile' %}" class="nav-avatar" title="{{ user.username }}">{{ user.first_name|make_list|first|default:"?" }}{{ user.last_name|make_list|first|default:"" }}</a>
                     <a href="{% url 'wishlist:logout' %}">Logout</a>
                 {% else %}
                     <a href="{% url 'wishlist:login' %}">Login</a>
@@ -68,7 +68,7 @@
                 <a href="#" onclick="openCreateModal('event'); toggleMobileNav(); return false;">Create Event</a>
                 <a href="#" onclick="openCreateModal('activity'); toggleMobileNav(); return false;">Create Activity</a>
                 <div class="mobile-nav-divider"></div>
-                <span class="mobile-nav-user">{{ user.username }}</span>
+                <a href="{% url 'wishlist:profile' %}">My Profile</a>
                 <a href="{% url 'wishlist:logout' %}">Logout</a>
             </div>
             {% else %}

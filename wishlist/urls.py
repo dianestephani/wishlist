@@ -23,6 +23,10 @@ urlpatterns = [
     path("item/<int:item_id>/visit-store/", views.visit_store, name="visit_store"),
     path("item/<int:item_id>/purchase/", views.mark_purchased, name="mark_purchased"),
     path("item/<int:item_id>/undo-purchase/", views.undo_purchase, name="undo_purchase"),
+    # Profile
+    path("profile/", views.profile, name="profile"),
+    path("profile/edit/", views.edit_profile, name="edit_profile"),
+    path("profile/delete/", views.delete_account, name="delete_account"),
     # Friends
     path("friends/", views.friends, name="friends"),
     # Events

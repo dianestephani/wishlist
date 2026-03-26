@@ -5,7 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .email import send_purchased_email, send_undo_email
-from .forms import ActivityForm, EventForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
+from .forms import ActivityForm, EventForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
 from .models import Activity, Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
@@ -204,6 +204,33 @@ def delete_activity(request, activity_id):
         messages.success(request, f'Activity "{title}" deleted.')
         return redirect("wishlist:activities")
     return render(request, "wishlist/confirm_delete.html", {"object": activity, "type": "activity"})
+
+
+@login_required
+def profile(request):
+    return render(request, "wishlist/profile.html")
+
+
+@login_required
+def edit_profile(request):
+    if request.method == "POST":
+        form = ProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated!")
+            return redirect("wishlist:profile")
+    else:
+        form = ProfileForm(instance=request.user)
+    return render(request, "wishlist/edit_profile.html", {"form": form})
+
+
+@login_required
+def delete_account(request):
+    if request.method == "POST":
+        request.user.delete()
+        messages.info(request, "Your account has been deleted.")
+        return redirect("wishlist:login")
+    return render(request, "wishlist/confirm_delete_account.html")
 
 
 @login_required

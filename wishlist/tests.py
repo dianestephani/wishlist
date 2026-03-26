@@ -5,7 +5,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
-from .models import ItemEvent, Purchase, WishlistItem
+from .models import ItemEvent, ItemView, Purchase, WishlistItem
 
 User = get_user_model()
 
@@ -157,6 +157,38 @@ class ItemEventModelTests(TestCase):
         )
         self.item.delete()
         self.assertEqual(ItemEvent.objects.count(), 0)
+
+
+class ItemViewModelTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="owner", email="owner@example.com", password="pass123"
+        )
+        self.viewer = User.objects.create_user(
+            username="viewer", email="viewer@example.com", password="pass123"
+        )
+        self.item = WishlistItem.objects.create(user=self.owner, title="Watched")
+
+    def test_create_view_record(self):
+        view = ItemView.objects.create(item=self.item, user=self.viewer, count=3)
+        self.assertEqual(view.count, 3)
+        self.assertIn("Watched", str(view))
+        self.assertIn("3x", str(view))
+
+    def test_unique_per_user_per_item(self):
+        ItemView.objects.create(item=self.item, user=self.viewer, count=1)
+        with self.assertRaises(Exception):
+            ItemView.objects.create(item=self.item, user=self.viewer, count=1)
+
+    def test_multiple_users_can_view_same_item(self):
+        ItemView.objects.create(item=self.item, user=self.owner, count=2)
+        ItemView.objects.create(item=self.item, user=self.viewer, count=5)
+        self.assertEqual(ItemView.objects.filter(item=self.item).count(), 2)
+
+    def test_cascade_delete_with_item(self):
+        ItemView.objects.create(item=self.item, user=self.viewer, count=1)
+        self.item.delete()
+        self.assertEqual(ItemView.objects.count(), 0)
 
 
 # ---------------------------------------------------------------------------
@@ -620,6 +652,37 @@ class ItemDetailViewTests(TestCase):
         response = self.client.get(self.url)
         self.assertContains(response, "Activity Log")
         self.assertContains(response, "No activity yet")
+
+    def test_view_increments_counter(self):
+        self.client.login(username="owner", password="pass123")
+        self.client.get(self.url)
+        self.client.get(self.url)
+        self.client.get(self.url)
+        view = ItemView.objects.get(item=self.item, user=self.owner)
+        self.assertEqual(view.count, 3)
+
+    def test_regular_user_cannot_see_view_stats(self):
+        regular = User.objects.create_user(
+            username="regular", email="regular@example.com", password="pass123"
+        )
+        self.client.login(username="regular", password="pass123")
+        self.client.get(self.url)
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "View Count")
+
+    def test_superuser_can_see_view_stats(self):
+        admin = User.objects.create_superuser(
+            username="admin", email="admin@example.com", password="pass123"
+        )
+        # Regular user views the item
+        self.client.login(username="owner", password="pass123")
+        self.client.get(self.url)
+        self.client.get(self.url)
+        # Admin views the item
+        self.client.login(username="admin", password="pass123")
+        response = self.client.get(self.url)
+        self.assertContains(response, "View Count")
+        self.assertContains(response, "owner")
 
     def test_nonexistent_item_returns_404(self):
         self.client.login(username="owner", password="pass123")

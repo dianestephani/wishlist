@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import ItemEvent, Purchase, User, WishlistItem
+from .models import ItemEvent, ItemView, Purchase, User, WishlistItem
 
 
 @admin.register(User)
@@ -18,6 +18,13 @@ class UserAdmin(BaseUserAdmin):
     )
 
 
+class ItemViewInline(admin.TabularInline):
+    model = ItemView
+    extra = 0
+    readonly_fields = ("user", "count")
+    can_delete = False
+
+
 class ItemEventInline(admin.TabularInline):
     model = ItemEvent
     extra = 0
@@ -31,7 +38,7 @@ class WishlistItemAdmin(admin.ModelAdmin):
     list_filter = ("status", "category", "store")
     search_fields = ("title", "brand", "store")
     readonly_fields = ("created_at",)
-    inlines = [ItemEventInline]
+    inlines = [ItemViewInline, ItemEventInline]
 
 
 @admin.register(Purchase)

@@ -84,3 +84,43 @@ class ItemEvent(models.Model):
 
     def __str__(self):
         return f"{self.item.title} — {self.get_event_type_display()} by {self.user}"
+
+
+class ItemView(models.Model):
+    item = models.ForeignKey(
+        WishlistItem,
+        on_delete=models.CASCADE,
+        related_name="views",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="item_views",
+    )
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ("item", "user")
+
+    def __str__(self):
+        return f"{self.user} viewed {self.item.title} ({self.count}x)"
+
+
+class StoreClick(models.Model):
+    item = models.ForeignKey(
+        WishlistItem,
+        on_delete=models.CASCADE,
+        related_name="store_clicks",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="store_clicks",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user} clicked store for {self.item.title}"

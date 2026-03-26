@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
-from .models import ItemEvent, Purchase, WishlistItem
+from .models import ItemEvent, ItemView, Purchase, StoreClick, WishlistItem
 
 SORT_OPTIONS = {
     "price_asc": "price",
@@ -41,15 +41,36 @@ def index(request):
 def item_detail(request, item_id):
     item = get_object_or_404(WishlistItem, pk=item_id)
 
+    view_record, _ = ItemView.objects.get_or_create(item=item, user=request.user)
+    view_record.count += 1
+    view_record.save()
+
     events = None
+    view_stats = None
+    store_click_stats = None
     if request.user.is_superuser:
         events = item.events.select_related("user").all()
+        view_stats = item.views.select_related("user").order_by("-count")
+        store_click_stats = item.store_clicks.select_related("user").all()
 
     context = {
         "item": item,
         "events": events,
+        "view_stats": view_stats,
+        "store_click_stats": store_click_stats,
     }
     return render(request, "wishlist/item_detail.html", context)
+
+
+@login_required
+def visit_store(request, item_id):
+    item = get_object_or_404(WishlistItem, pk=item_id)
+
+    if not item.product_url:
+        return redirect("wishlist:item_detail", item_id=item.pk)
+
+    StoreClick.objects.create(item=item, user=request.user)
+    return redirect(item.product_url)
 
 
 @login_required

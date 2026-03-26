@@ -78,6 +78,13 @@ header nav {
     max-width: 960px;
     margin: 0 auto;
     width: 100%;
+    position: relative;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
 }
 
 .nav-brand {
@@ -91,6 +98,23 @@ header nav {
 header nav a {
     color: #fff;
     text-decoration: none;
+}
+
+.nav-pages {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.nav-pages a {
+    font-size: 0.88rem;
+    font-weight: 400;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+}
+
+.nav-pages a:hover {
+    opacity: 1;
 }
 
 .nav-links {
@@ -113,6 +137,42 @@ header nav a {
 .nav-user {
     color: rgba(255, 255, 255, 0.75);
     font-size: 0.9rem;
+}
+
+/* ===== Hamburger (hidden on desktop) ===== */
+.hamburger {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.hamburger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.hamburger.active span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-nav {
+    display: none;
 }
 
 /* ===== Main ===== */
@@ -1105,20 +1165,54 @@ strong {
         padding: 0.75rem 1rem;
     }
 
+    .nav-pages,
+    .nav-links {
+        display: none;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+
+    .mobile-nav {
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(25, 15, 35, 0.95);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        z-index: 55;
+    }
+
+    .mobile-nav a {
+        display: block;
+        padding: 0.85rem 1.5rem;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .mobile-nav a:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--pink-light);
+    }
+
+    .mobile-nav-divider {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-nav-user {
+        padding: 0.7rem 1.5rem;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+    }
+
     .nav-brand {
         font-size: 1.1rem;
-    }
-
-    .nav-links {
-        gap: 0.75rem;
-    }
-
-    .nav-links a {
-        font-size: 0.8rem;
-    }
-
-    .nav-user {
-        font-size: 0.8rem;
     }
 
     main {

@@ -22,10 +22,19 @@
 
     <header>
         <nav>
-            <a href="{% url 'wishlist:index' %}" class="nav-brand">Wishlist</a>
+            <div class="nav-left">
+                <a href="{% url 'wishlist:dashboard' %}" class="nav-brand">Wishlist</a>
+                {% if user.is_authenticated %}
+                    <div class="nav-pages">
+                        <a href="{% url 'wishlist:dashboard' %}">Dashboard</a>
+                        <a href="{% url 'wishlist:index' %}">Wishlists</a>
+                        <a href="{% url 'wishlist:events' %}">Events</a>
+                        <a href="{% url 'wishlist:activities' %}">Activities</a>
+                    </div>
+                {% endif %}
+            </div>
             <div class="nav-links">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'wishlist:dashboard' %}">Dashboard</a>
                     <span class="nav-user">{{ user.username }}</span>
                     <a href="{% url 'wishlist:logout' %}">Logout</a>
                 {% else %}
@@ -33,6 +42,27 @@
                     <a href="{% url 'wishlist:register' %}">Register</a>
                 {% endif %}
             </div>
+            <button type="button" class="hamburger" onclick="toggleMobileNav()" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            {% if user.is_authenticated %}
+            <div id="mobile-nav" class="mobile-nav" style="display: none;">
+                <a href="{% url 'wishlist:dashboard' %}">Dashboard</a>
+                <a href="{% url 'wishlist:index' %}">Wishlists</a>
+                <a href="{% url 'wishlist:events' %}">Events</a>
+                <a href="{% url 'wishlist:activities' %}">Activities</a>
+                <div class="mobile-nav-divider"></div>
+                <span class="mobile-nav-user">{{ user.username }}</span>
+                <a href="{% url 'wishlist:logout' %}">Logout</a>
+            </div>
+            {% else %}
+            <div id="mobile-nav" class="mobile-nav" style="display: none;">
+                <a href="{% url 'wishlist:login' %}">Login</a>
+                <a href="{% url 'wishlist:register' %}">Register</a>
+            </div>
+            {% endif %}
         </nav>
     </header>
 
@@ -54,6 +84,19 @@
         <p>&copy; 2026 Wishlist App</p>
     </footer>
 
+    <script>
+    function toggleMobileNav() {
+        var nav = document.getElementById("mobile-nav");
+        var hamburger = document.querySelector(".hamburger");
+        if (nav.style.display === "none") {
+            nav.style.display = "flex";
+            hamburger.classList.add("active");
+        } else {
+            nav.style.display = "none";
+            hamburger.classList.remove("active");
+        }
+    }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

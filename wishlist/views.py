@@ -1,23 +1,16 @@
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.shortcuts import get_object_or_404, redirect, render
-
 from django.db.models import Max, Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ActivityForm, EventForm, MessageForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
 from .messaging import get_or_create_conversation, notify, send_message
 from .models import Activity, Conversation, Event, FriendRequest, Friendship, ItemEvent, ItemView, Message, Notification, Purchase, StoreClick, Wishlist, WishlistItem
 
-SORT_OPTIONS = {
-    "price_asc": "price",
-    "price_desc": "-price",
-    "category": "category",
-    "brand": "brand",
-    "store": "store",
-}
+User = get_user_model()
 
 
 @login_required
@@ -271,9 +264,6 @@ def friends(request):
     search_results = None
     query = request.GET.get("q", "").strip()
     if query:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        from django.db.models import Q
         search_results = (
             User.objects.filter(
                 Q(username__icontains=query) |
@@ -301,8 +291,6 @@ def friends(request):
 
 @login_required
 def send_friend_request(request, user_id):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
     to_user = get_object_or_404(User, pk=user_id)
 
     if to_user == request.user:
@@ -366,8 +354,6 @@ def friend_requests_api(request):
 
 @login_required
 def public_profile(request, username):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
     profile_user = get_object_or_404(User, username=username)
     is_self = request.user == profile_user
     is_friend = Friendship.objects.filter(user=request.user, friend=profile_user).exists()
@@ -563,7 +549,6 @@ def inbox(request):
 def conversation_detail(request, convo_id):
     convo = get_object_or_404(Conversation, pk=convo_id)
     if not convo.participants.filter(pk=request.user.pk).exists():
-        from django.http import Http404
         raise Http404
     other = convo.other_participant(request.user)
     # Mark messages as read
@@ -589,8 +574,6 @@ def conversation_detail(request, convo_id):
 
 @login_required
 def start_conversation(request, user_id):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
     other = get_object_or_404(User, pk=user_id)
 
     if not Friendship.objects.filter(user=request.user, friend=other).exists():

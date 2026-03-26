@@ -19,76 +19,90 @@
 
     {% if is_friend %}
         <p class="friend-badge-inline">You are friends</p>
+    {% elif not is_self %}
+        {% if has_pending_request %}
+            <p class="friend-badge-inline pending">Friend request pending</p>
+        {% else %}
+            <div class="detail-actions">
+                <a href="{% url 'wishlist:send_friend_request' profile_user.id %}" class="btn-add-friend">Add Friend</a>
+            </div>
+        {% endif %}
     {% endif %}
 </div>
 
-<!-- Public Wishlists -->
-<section class="public-section">
-    <h2 class="section-title">Wishlists</h2>
-    {% if public_wishlists %}
-        <div class="card-grid">
-            {% for wl in public_wishlists %}
-                <div class="card">
-                    <div class="card-body">
-                        <h2 class="card-title">{{ wl.name }}</h2>
-                        {% if wl.description %}
-                            <p class="card-sub">{{ wl.description }}</p>
-                        {% endif %}
-                        <p class="card-sub">{{ wl.items.count }} item{{ wl.items.count|pluralize }}</p>
+{% if is_self or is_friend %}
+    <!-- Public Wishlists -->
+    <section class="public-section">
+        <h2 class="section-title">Wishlists</h2>
+        {% if public_wishlists %}
+            <div class="card-grid">
+                {% for wl in public_wishlists %}
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-title">{{ wl.name }}</h2>
+                            {% if wl.description %}
+                                <p class="card-sub">{{ wl.description }}</p>
+                            {% endif %}
+                            <p class="card-sub">{{ wl.items.count }} item{{ wl.items.count|pluralize }}</p>
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="empty-state">No public wishlists.</p>
-    {% endif %}
-</section>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No public wishlists.</p>
+        {% endif %}
+    </section>
 
-<!-- Public Events -->
-<section class="public-section">
-    <h2 class="section-title">Events</h2>
-    {% if public_events %}
-        <div class="card-grid">
-            {% timezone "America/Los_Angeles" %}
-            {% for event in public_events %}
-                <div class="card">
-                    <div class="card-body">
-                        <h2 class="card-title">{{ event.title }}</h2>
-                        <p class="card-date">{{ event.date|date:"l, M d, Y" }}</p>
-                        {% if event.start_time %}
-                            <p class="card-sub">{{ event.start_time|date:"g:i A" }}{% if event.end_time %} — {{ event.end_time|date:"g:i A" }}{% endif %}</p>
-                        {% endif %}
-                        {% if event.address %}
-                            <p class="card-sub">{{ event.address }}</p>
-                        {% endif %}
+    <!-- Public Events -->
+    <section class="public-section">
+        <h2 class="section-title">Events</h2>
+        {% if public_events %}
+            <div class="card-grid">
+                {% timezone "America/Los_Angeles" %}
+                {% for event in public_events %}
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-title">{{ event.title }}</h2>
+                            <p class="card-date">{{ event.date|date:"l, M d, Y" }}</p>
+                            {% if event.start_time %}
+                                <p class="card-sub">{{ event.start_time|date:"g:i A" }}{% if event.end_time %} — {{ event.end_time|date:"g:i A" }}{% endif %}</p>
+                            {% endif %}
+                            {% if event.address %}
+                                <p class="card-sub">{{ event.address }}</p>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
-            {% endtimezone %}
-        </div>
-    {% else %}
-        <p class="empty-state">No public events.</p>
-    {% endif %}
-</section>
+                {% endfor %}
+                {% endtimezone %}
+            </div>
+        {% else %}
+            <p class="empty-state">No public events.</p>
+        {% endif %}
+    </section>
 
-<!-- Public Activities -->
-<section class="public-section">
-    <h2 class="section-title">Activities</h2>
-    {% if public_activities %}
-        <div class="card-grid">
-            {% for activity in public_activities %}
-                <div class="card">
-                    <div class="card-body">
-                        <h2 class="card-title">{{ activity.title }}</h2>
-                        {% if activity.location %}
-                            <p class="card-sub">{{ activity.location }}</p>
-                        {% endif %}
+    <!-- Public Activities -->
+    <section class="public-section">
+        <h2 class="section-title">Activities</h2>
+        {% if public_activities %}
+            <div class="card-grid">
+                {% for activity in public_activities %}
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-title">{{ activity.title }}</h2>
+                            {% if activity.location %}
+                                <p class="card-sub">{{ activity.location }}</p>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="empty-state">No public activities.</p>
-    {% endif %}
-</section>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No public activities.</p>
+        {% endif %}
+    </section>
+{% else %}
+    <div class="restricted-message">
+        <p>Add {{ profile_user.first_name|default:profile_user.username }} as a friend to see their wishlists, events, and activities.</p>
+    </div>
+{% endif %}
 {% endblock %}

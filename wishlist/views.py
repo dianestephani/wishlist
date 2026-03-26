@@ -367,13 +367,25 @@ def public_profile(request, username):
     from django.contrib.auth import get_user_model
     User = get_user_model()
     profile_user = get_object_or_404(User, username=username)
+    is_self = request.user == profile_user
     is_friend = Friendship.objects.filter(user=request.user, friend=profile_user).exists()
-    public_wishlists = Wishlist.objects.filter(owner=profile_user, is_public=True)
-    public_events = Event.objects.filter(owner=profile_user, is_public=True)
-    public_activities = Activity.objects.filter(owner=profile_user, is_public=True)
+    has_pending_request = FriendRequest.objects.filter(
+        from_user=request.user, to_user=profile_user, status=FriendRequest.Status.PENDING
+    ).exists()
+
+    public_wishlists = None
+    public_events = None
+    public_activities = None
+    if is_self or is_friend:
+        public_wishlists = Wishlist.objects.filter(owner=profile_user, is_public=True)
+        public_events = Event.objects.filter(owner=profile_user, is_public=True)
+        public_activities = Activity.objects.filter(owner=profile_user, is_public=True)
+
     context = {
         "profile_user": profile_user,
+        "is_self": is_self,
         "is_friend": is_friend,
+        "has_pending_request": has_pending_request,
         "public_wishlists": public_wishlists,
         "public_events": public_events,
         "public_activities": public_activities,

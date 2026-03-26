@@ -1820,6 +1820,25 @@ strong {
     color: var(--text-muted);
 }
 
+.restricted-message {
+    margin-top: 1.5rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-shadow);
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+}
+
+.friend-badge-inline.pending {
+    color: var(--gold);
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
 .friend-badge-inline {
     text-align: center;
     margin-top: 1rem;

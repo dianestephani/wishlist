@@ -1746,39 +1746,67 @@ class PublicProfileViewTests(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    def test_shows_public_wishlists(self):
+    def test_non_friend_cannot_see_wishlists(self):
+        Wishlist.objects.create(owner=self.friend, name="Public List", is_public=True)
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Public List")
+        self.assertContains(response, "Add")
+
+    def test_non_friend_sees_restricted_message(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Add")
+        self.assertContains(response, "friend to see their")
+
+    def test_non_friend_with_pending_request(self):
+        FriendRequest.objects.create(from_user=self.user, to_user=self.friend)
+        response = self.client.get(self.url)
+        self.assertContains(response, "pending")
+
+    def test_friend_sees_public_wishlists(self):
+        Friendship.objects.create(user=self.user, friend=self.friend)
         Wishlist.objects.create(owner=self.friend, name="Public List", is_public=True)
         response = self.client.get(self.url)
         self.assertContains(response, "Public List")
 
-    def test_hides_private_wishlists(self):
+    def test_friend_sees_empty_wishlists(self):
+        Friendship.objects.create(user=self.user, friend=self.friend)
+        response = self.client.get(self.url)
+        self.assertContains(response, "No public wishlists")
+
+    def test_friend_hides_private_wishlists(self):
+        Friendship.objects.create(user=self.user, friend=self.friend)
         Wishlist.objects.create(owner=self.friend, name="Secret List", is_public=False)
         response = self.client.get(self.url)
         self.assertNotContains(response, "Secret List")
 
-    def test_shows_public_events(self):
+    def test_friend_sees_public_events(self):
         from datetime import date
+        Friendship.objects.create(user=self.user, friend=self.friend)
         Event.objects.create(owner=self.friend, title="Public Party", date=date.today(), is_public=True)
         response = self.client.get(self.url)
         self.assertContains(response, "Public Party")
 
-    def test_hides_private_events(self):
+    def test_friend_hides_private_events(self):
         from datetime import date
+        Friendship.objects.create(user=self.user, friend=self.friend)
         Event.objects.create(owner=self.friend, title="Secret Party", date=date.today(), is_public=False)
         response = self.client.get(self.url)
         self.assertNotContains(response, "Secret Party")
 
-    def test_shows_public_activities(self):
+    def test_friend_sees_public_activities(self):
+        Friendship.objects.create(user=self.user, friend=self.friend)
         Activity.objects.create(owner=self.friend, title="Public Hike", is_public=True)
         response = self.client.get(self.url)
         self.assertContains(response, "Public Hike")
 
-    def test_hides_private_activities(self):
+    def test_friend_hides_private_activities(self):
+        Friendship.objects.create(user=self.user, friend=self.friend)
         Activity.objects.create(owner=self.friend, title="Secret Hike", is_public=False)
         response = self.client.get(self.url)
         self.assertNotContains(response, "Secret Hike")
 
-    def test_shows_empty_sections(self):
+    def test_friend_sees_empty_sections(self):
+        Friendship.objects.create(user=self.user, friend=self.friend)
         response = self.client.get(self.url)
         self.assertContains(response, "No public wishlists")
         self.assertContains(response, "No public events")

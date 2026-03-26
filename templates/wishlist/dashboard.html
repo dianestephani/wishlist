@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block title %}Dashboard - Wishlist{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">Welcome, {{ user.first_name|default:user.username }}!</h1>
+        <div class="create-dropdown">
+            <button type="button" class="btn-create" onclick="toggleCreateMenu()">Create +</button>
+            <div id="create-menu" class="create-menu" style="display: none;">
+                <a href="{% url 'wishlist:create_wishlist' %}">Create Wishlist</a>
+                <a href="{% url 'wishlist:create_event' %}">Create Event</a>
+                <a href="{% url 'wishlist:create_activity' %}">Create Activity</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-cards">
+        <!-- Wishlists -->
+        <div class="dashboard-card">
+            <h2>Wishlists</h2>
+            {% if wishlists %}
+                <ul class="dashboard-card-list">
+                    {% for wl in wishlists %}
+                        <li>
+                            <a href="{% url 'wishlist:wishlist_detail' wl.id %}" class="dashboard-card-item-link">
+                                <span class="dashboard-card-item-title">{{ wl.title }}</span>
+                                <span class="dashboard-card-item-date">{{ wl.created_at|date:"M d, Y" }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="dashboard-card-empty">No wishlists yet.</p>
+            {% endif %}
+            <a href="{% url 'wishlist:index' %}" class="dashboard-card-see-all">See All</a>
+        </div>
+
+        <!-- Events -->
+        <div class="dashboard-card">
+            <h2>Events</h2>
+            {% if events %}
+                <ul class="dashboard-card-list">
+                    {% timezone "America/Los_Angeles" %}
+                    {% for event in events %}
+                        <li>
+                            <a href="{% url 'wishlist:event_detail' event.id %}" class="dashboard-card-item-link">
+                                <span class="dashboard-card-item-title">{{ event.title }}</span>
+                                <span class="dashboard-card-item-date">{{ event.date|date:"M d, Y" }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                    {% endtimezone %}
+                </ul>
+            {% else %}
+                <p class="dashboard-card-empty">No events yet.</p>
+            {% endif %}
+            <a href="{% url 'wishlist:events' %}" class="dashboard-card-see-all">See All</a>
+        </div>
+
+        <!-- Activities -->
+        <div class="dashboard-card">
+            <h2>Activities</h2>
+            {% if activities %}
+                <ul class="dashboard-card-list">
+                    {% for activity in activities %}
+                        <li>
+                            <a href="{% url 'wishlist:activities' %}" class="dashboard-card-item-link">
+                                <span class="dashboard-card-item-title">{{ activity.title }}</span>
+                                <span class="dashboard-card-item-date">{{ activity.created_at|date:"M d, Y" }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="dashboard-card-empty">No activities yet.</p>
+            {% endif %}
+            <a href="{% url 'wishlist:activities' %}" class="dashboard-card-see-all">See All</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleCreateMenu() {
+        var menu = document.getElementById("create-menu");
+        menu.style.display = menu.style.display === "none" ? "block" : "none";
+    }
+
+    document.addEventListener("click", function (e) {
+        var dropdown = document.querySelector(".create-dropdown");
+        if (dropdown && !dropdown.contains(e.target)) {
+            document.getElementById("create-menu").style.display = "none";
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Create Event{% endblock %}
+
+{% block content %}
+<div class="auth-form">
+    <h1>Create Event</h1>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <ul class="form-errors">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit">Create Event</button>
+    </form>
+
+    <p class="auth-link"><a href="{% url 'wishlist:dashboard' %}">Back to Dashboard</a></p>
+</div>
+{% endblock %}

@@ -6,8 +6,8 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from .email import send_purchased_email, send_undo_email
-from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
-from .models import ItemEvent, ItemView, Purchase, StoreClick, WishlistItem
+from .forms import ActivityForm, EventForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm
+from .models import Activity, Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 User = get_user_model()
 
@@ -229,6 +229,87 @@ class StoreClickModelTests(TestCase):
         self.assertEqual(StoreClick.objects.count(), 0)
 
 
+class EventModelTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="creator", email="creator@example.com", password="pass123"
+        )
+
+    def test_create_event(self):
+        from datetime import date, time
+        event = Event.objects.create(
+            created_by=self.user,
+            title="Birthday Party",
+            date=date(2026, 7, 15),
+            start_time=time(18, 0),
+            end_time=time(22, 0),
+            address="123 Main St",
+            notes="Bring cake",
+        )
+        self.assertEqual(str(event), "Birthday Party")
+        self.assertEqual(event.created_by, self.user)
+
+    def test_optional_fields(self):
+        from datetime import date
+        event = Event.objects.create(
+            created_by=self.user, title="Simple Event", date=date.today()
+        )
+        self.assertIsNone(event.start_time)
+        self.assertIsNone(event.end_time)
+        self.assertEqual(event.address, "")
+        self.assertEqual(event.notes, "")
+
+    def test_ordering_by_date_desc(self):
+        from datetime import date
+        e1 = Event.objects.create(created_by=self.user, title="Old", date=date(2026, 1, 1))
+        e2 = Event.objects.create(created_by=self.user, title="New", date=date(2026, 12, 1))
+        events = list(Event.objects.all())
+        self.assertEqual(events[0], e2)
+        self.assertEqual(events[1], e1)
+
+    def test_cascade_delete_with_user(self):
+        from datetime import date
+        Event.objects.create(created_by=self.user, title="Gone", date=date.today())
+        self.user.delete()
+        self.assertEqual(Event.objects.count(), 0)
+
+
+class ActivityModelTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="creator", email="creator@example.com", password="pass123"
+        )
+
+    def test_create_activity(self):
+        activity = Activity.objects.create(
+            created_by=self.user,
+            title="Hiking",
+            location="Seattle, WA",
+            notes="Bring water",
+        )
+        self.assertEqual(str(activity), "Hiking")
+        self.assertEqual(activity.created_by, self.user)
+
+    def test_optional_fields(self):
+        activity = Activity.objects.create(
+            created_by=self.user, title="Reading"
+        )
+        self.assertEqual(activity.location, "")
+        self.assertEqual(activity.notes, "")
+
+    def test_ordering_newest_first(self):
+        a1 = Activity.objects.create(created_by=self.user, title="First")
+        a2 = Activity.objects.create(created_by=self.user, title="Second")
+        activities = list(Activity.objects.all())
+        self.assertEqual(activities[0], a2)
+        self.assertEqual(activities[1], a1)
+
+    def test_cascade_delete_with_user(self):
+        Activity.objects.create(created_by=self.user, title="Gone")
+        self.user.delete()
+        self.assertEqual(Activity.objects.count(), 0)
+
+
 # ---------------------------------------------------------------------------
 # Form tests
 # ---------------------------------------------------------------------------
@@ -308,6 +389,115 @@ class UndoPurchaseFormTests(TestCase):
         self.assertEqual(form.cleaned_data["message"], "Oops, sorry!")
 
 
+class EventFormTests(TestCase):
+    def get_valid_data(self):
+        return {
+            "title": "Birthday Party",
+            "date": "2026-07-15",
+            "start_time": "18:00",
+            "end_time": "22:00",
+            "address": "123 Main St",
+            "notes": "",
+        }
+
+    def test_valid_form(self):
+        form = EventForm(data=self.get_valid_data())
+        self.assertTrue(form.is_valid())
+
+    def test_title_required(self):
+        data = self.get_valid_data()
+        data["title"] = ""
+        form = EventForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("title", form.errors)
+
+    def test_date_required(self):
+        data = self.get_valid_data()
+        data["date"] = ""
+        form = EventForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("date", form.errors)
+
+    def test_start_time_required(self):
+        data = self.get_valid_data()
+        data["start_time"] = ""
+        form = EventForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("start_time", form.errors)
+
+    def test_end_time_required(self):
+        data = self.get_valid_data()
+        data["end_time"] = ""
+        form = EventForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("end_time", form.errors)
+
+    def test_address_required(self):
+        data = self.get_valid_data()
+        data["address"] = ""
+        form = EventForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("address", form.errors)
+
+    def test_notes_optional(self):
+        data = self.get_valid_data()
+        data["notes"] = ""
+        form = EventForm(data=data)
+        self.assertTrue(form.is_valid())
+
+    def test_end_time_before_start_time_invalid(self):
+        data = self.get_valid_data()
+        data["start_time"] = "22:00"
+        data["end_time"] = "18:00"
+        form = EventForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("end_time", form.errors)
+
+    def test_end_time_equal_to_start_time_invalid(self):
+        data = self.get_valid_data()
+        data["start_time"] = "18:00"
+        data["end_time"] = "18:00"
+        form = EventForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("end_time", form.errors)
+
+
+class ActivityFormTests(TestCase):
+    def test_valid_form(self):
+        form = ActivityForm(data={
+            "title": "Hiking",
+            "location": "Seattle, WA",
+            "notes": "",
+        })
+        self.assertTrue(form.is_valid())
+
+    def test_title_required(self):
+        form = ActivityForm(data={"title": "", "location": "Seattle, WA"})
+        self.assertFalse(form.is_valid())
+        self.assertIn("title", form.errors)
+
+    def test_location_required(self):
+        form = ActivityForm(data={"title": "Hiking", "location": ""})
+        self.assertFalse(form.is_valid())
+        self.assertIn("location", form.errors)
+
+    def test_notes_optional(self):
+        form = ActivityForm(data={
+            "title": "Hiking",
+            "location": "Seattle, WA",
+        })
+        self.assertTrue(form.is_valid())
+
+    def test_valid_with_notes(self):
+        form = ActivityForm(data={
+            "title": "Hiking",
+            "location": "Seattle, WA",
+            "notes": "Bring water",
+        })
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["notes"], "Bring water")
+
+
 # ---------------------------------------------------------------------------
 # Auth view tests
 # ---------------------------------------------------------------------------
@@ -329,8 +519,19 @@ class RegisterViewTests(TestCase):
             "password1": "securePass99!",
             "password2": "securePass99!",
         })
-        self.assertRedirects(response, reverse("wishlist:index"))
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
         self.assertTrue(User.objects.filter(username="newuser").exists())
+
+    def test_successful_registration_shows_message(self):
+        response = self.client.post(self.url, {
+            "username": "msguser",
+            "first_name": "Msg",
+            "last_name": "User",
+            "email": "msg@example.com",
+            "password1": "securePass99!",
+            "password2": "securePass99!",
+        }, follow=True)
+        self.assertContains(response, "Welcome")
 
     def test_registration_logs_user_in(self):
         self.client.post(self.url, {
@@ -353,7 +554,7 @@ class RegisterViewTests(TestCase):
         User.objects.create_user(username="u", email="u@e.com", password="pass123")
         self.client.login(username="u", password="pass123")
         response = self.client.get(self.url)
-        self.assertRedirects(response, reverse("wishlist:index"))
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
 
 
 class LoginViewTests(TestCase):
@@ -373,7 +574,14 @@ class LoginViewTests(TestCase):
             "username": "testuser",
             "password": "pass123",
         })
-        self.assertRedirects(response, reverse("wishlist:index"))
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
+
+    def test_successful_login_shows_message(self):
+        response = self.client.post(self.url, {
+            "username": "testuser",
+            "password": "pass123",
+        }, follow=True)
+        self.assertContains(response, "Welcome back")
 
     def test_invalid_login(self):
         response = self.client.post(self.url, {
@@ -386,7 +594,7 @@ class LoginViewTests(TestCase):
     def test_authenticated_user_redirected(self):
         self.client.login(username="testuser", password="pass123")
         response = self.client.get(self.url)
-        self.assertRedirects(response, reverse("wishlist:index"))
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
 
 
 class LogoutViewTests(TestCase):
@@ -400,11 +608,302 @@ class LogoutViewTests(TestCase):
         response = self.client.get(reverse("wishlist:logout"))
         self.assertRedirects(response, reverse("wishlist:login"))
 
+    def test_logout_shows_message(self):
+        self.client.login(username="testuser", password="pass123")
+        response = self.client.get(reverse("wishlist:logout"), follow=True)
+        self.assertContains(response, "logged out")
+
     def test_logout_clears_session(self):
         self.client.login(username="testuser", password="pass123")
         self.client.get(reverse("wishlist:logout"))
-        response = self.client.get(reverse("wishlist:index"))
-        self.assertRedirects(response, f"{reverse('wishlist:login')}?next=/")
+        response = self.client.get(reverse("wishlist:dashboard"))
+        self.assertRedirects(response, f"{reverse('wishlist:login')}?next={reverse('wishlist:dashboard')}")
+
+
+# ---------------------------------------------------------------------------
+# Dashboard view tests
+# ---------------------------------------------------------------------------
+class DashboardViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:dashboard")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertRedirects(response, f"{reverse('wishlist:login')}?next={self.url}")
+
+    def test_renders_dashboard_template(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/dashboard.html")
+
+    def test_shows_welcome_message(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Welcome")
+
+    def test_shows_three_sections(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Wishlists")
+        self.assertContains(response, "Events")
+        self.assertContains(response, "Activities")
+
+    def test_shows_wishlist_title_and_date(self):
+        wl = Wishlist.objects.create(user=self.user, title="My Birthday List")
+        response = self.client.get(self.url)
+        self.assertContains(response, "My Birthday List")
+
+    def test_shows_empty_wishlists(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No wishlists yet")
+
+    def test_shows_event_title_and_date(self):
+        from datetime import date
+        Event.objects.create(
+            created_by=self.user, title="Birthday Party", date=date.today()
+        )
+        response = self.client.get(self.url)
+        self.assertContains(response, "Birthday Party")
+
+    def test_shows_empty_events(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No events yet")
+
+    def test_shows_recent_activities(self):
+        Activity.objects.create(created_by=self.user, title="Hiking Trip")
+        response = self.client.get(self.url)
+        self.assertContains(response, "Hiking Trip")
+
+    def test_shows_empty_activities(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No activities yet")
+
+    def test_does_not_show_other_users_wishlists(self):
+        other = User.objects.create_user(
+            username="other", email="other@example.com", password="pass123"
+        )
+        Wishlist.objects.create(user=other, title="Not My List")
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Not My List")
+
+    def test_cards_link_to_correct_pages(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, reverse("wishlist:index"))
+        self.assertContains(response, reverse("wishlist:events"))
+        self.assertContains(response, reverse("wishlist:activities"))
+
+
+# ---------------------------------------------------------------------------
+# Events list view tests
+# ---------------------------------------------------------------------------
+class EventsListViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:events")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_renders_events_template(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/events.html")
+
+    def test_shows_user_events(self):
+        from datetime import date
+        Event.objects.create(created_by=self.user, title="My Party", date=date.today())
+        response = self.client.get(self.url)
+        self.assertContains(response, "My Party")
+
+    def test_does_not_show_other_users_events(self):
+        from datetime import date
+        other = User.objects.create_user(
+            username="other", email="other@example.com", password="pass123"
+        )
+        Event.objects.create(created_by=other, title="Not My Party", date=date.today())
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Not My Party")
+
+    def test_shows_empty_state(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No events yet")
+
+    def test_has_back_link(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, reverse("wishlist:dashboard"))
+
+
+# ---------------------------------------------------------------------------
+# Activities list view tests
+# ---------------------------------------------------------------------------
+class ActivitiesListViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:activities")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_renders_activities_template(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/activities.html")
+
+    def test_shows_user_activities(self):
+        Activity.objects.create(
+            created_by=self.user, title="Beach Day", location="Santa Cruz, CA"
+        )
+        response = self.client.get(self.url)
+        self.assertContains(response, "Beach Day")
+        self.assertContains(response, "Santa Cruz, CA")
+
+    def test_shows_empty_state(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No activities yet")
+
+    def test_has_back_link(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, reverse("wishlist:dashboard"))
+
+
+# ---------------------------------------------------------------------------
+# Create view tests
+# ---------------------------------------------------------------------------
+class CreateWishlistViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:create_wishlist")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_shows_form(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/create_wishlist.html")
+
+    def test_successful_create(self):
+        response = self.client.post(self.url, {"title": "New List", "description": "Test"})
+        self.assertEqual(Wishlist.objects.count(), 1)
+        wl = Wishlist.objects.first()
+        self.assertEqual(wl.title, "New List")
+        self.assertEqual(wl.user, self.user)
+
+    def test_shows_success_message(self):
+        response = self.client.post(self.url, {"title": "New List"}, follow=True)
+        self.assertContains(response, "created")
+
+
+class CreateEventViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:create_event")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_shows_form(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/create_event.html")
+
+    def test_successful_create(self):
+        response = self.client.post(self.url, {
+            "title": "My Party",
+            "date": "2026-07-15",
+            "start_time": "18:00",
+            "end_time": "22:00",
+            "address": "123 Main St",
+        })
+        self.assertEqual(Event.objects.count(), 1)
+        event = Event.objects.first()
+        self.assertEqual(event.title, "My Party")
+        self.assertEqual(event.created_by, self.user)
+
+    def test_invalid_times_rejected(self):
+        response = self.client.post(self.url, {
+            "title": "Bad Party",
+            "date": "2026-07-15",
+            "start_time": "22:00",
+            "end_time": "18:00",
+            "address": "123 Main St",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Event.objects.count(), 0)
+
+    def test_shows_success_message(self):
+        response = self.client.post(self.url, {
+            "title": "My Party",
+            "date": "2026-07-15",
+            "start_time": "18:00",
+            "end_time": "22:00",
+            "address": "123 Main St",
+        }, follow=True)
+        self.assertContains(response, "created")
+
+
+class CreateActivityViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:create_activity")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_shows_form(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/create_activity.html")
+
+    def test_successful_create(self):
+        response = self.client.post(self.url, {
+            "title": "Beach Day",
+            "location": "Santa Cruz, CA",
+        })
+        self.assertEqual(Activity.objects.count(), 1)
+        activity = Activity.objects.first()
+        self.assertEqual(activity.title, "Beach Day")
+        self.assertEqual(activity.created_by, self.user)
+
+    def test_missing_location_rejected(self):
+        response = self.client.post(self.url, {"title": "Hiking"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Activity.objects.count(), 0)
+
+    def test_shows_success_message(self):
+        response = self.client.post(self.url, {
+            "title": "Beach Day",
+            "location": "Santa Cruz, CA",
+        }, follow=True)
+        self.assertContains(response, "created")
 
 
 # ---------------------------------------------------------------------------
@@ -421,7 +920,7 @@ class IndexViewTests(TestCase):
     def test_requires_login(self):
         self.client.logout()
         response = self.client.get(self.url)
-        self.assertRedirects(response, f"{reverse('wishlist:login')}?next=/")
+        self.assertRedirects(response, f"{reverse('wishlist:login')}?next={self.url}")
 
     def test_displays_user_items(self):
         WishlistItem.objects.create(
@@ -523,6 +1022,10 @@ class MarkPurchasedViewTests(TestCase):
         self.assertEqual(purchase.purchased_by, self.user)
         self.assertEqual(purchase.message, "Got it!")
 
+    def test_successful_purchase_shows_message(self):
+        response = self.client.post(self.url, {"confirm": True}, follow=True)
+        self.assertContains(response, "marked as purchased")
+
     def test_purchase_creates_event(self):
         self.client.post(self.url, {"confirm": True, "message": "Bought it"})
         event = ItemEvent.objects.get(item=self.item)
@@ -596,6 +1099,10 @@ class UndoPurchaseViewTests(TestCase):
         self.item.refresh_from_db()
         self.assertEqual(self.item.status, WishlistItem.Status.AVAILABLE)
         self.assertFalse(Purchase.objects.filter(item=self.item).exists())
+
+    def test_successful_undo_shows_message(self):
+        response = self.client.post(self.url, {"message": "Sorry!"}, follow=True)
+        self.assertContains(response, "reverted to available")
 
     def test_undo_creates_event(self):
         self.client.post(self.url, {"message": "My bad"})

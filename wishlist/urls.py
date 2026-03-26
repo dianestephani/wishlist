@@ -5,7 +5,15 @@ from . import views
 app_name = "wishlist"
 
 urlpatterns = [
-    path("", views.index, name="index"),
+    path("", views.dashboard, name="dashboard"),
+    path("create/wishlist/", views.create_wishlist, name="create_wishlist"),
+    path("create/event/", views.create_event, name="create_event"),
+    path("create/activity/", views.create_activity, name="create_activity"),
+    path("wishlist/", views.index, name="index"),
+    path("wishlist/<int:wishlist_id>/", views.wishlist_detail, name="wishlist_detail"),
+    path("events/", views.events_list, name="events"),
+    path("events/<int:event_id>/", views.event_detail, name="event_detail"),
+    path("activities/", views.activities_list, name="activities"),
     path("item/<int:item_id>/", views.item_detail, name="item_detail"),
     path("item/<int:item_id>/visit-store/", views.visit_store, name="visit_store"),
     path("item/<int:item_id>/purchase/", views.mark_purchased, name="mark_purchased"),

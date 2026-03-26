@@ -73,19 +73,21 @@ See `.env.example` for a template.
 
 ## Features
 
+- **User dashboard** — Homepage with 3 clickable cards (Wishlists, Events, Activities) and a "Create +" dropdown menu
 - **User authentication** — Register, login, and logout with a custom User model (email, phone number)
-- **Wishlist display** — Items shown as glassmorphism cards with title, image, price, category, brand, store, and product link
+- **Wishlists** — Create and manage wishlists with item cards, sorting, purchase/undo actions
+- **Events** — Create events with title, date, start/end times, address, and notes
+- **Activities** — Track activities with title, location (city/state), and notes
 - **Item notes** — Optional notes displayed on the item detail page
-- **Sorting** — Sort items by price, category, brand, or store via query params
 - **Mark as purchased** — Confirm purchase with a required checkbox disclaimer and optional message
 - **Undo purchase** — "Just kidding!" button reverts a purchased item back to available
-- **Email notifications** — Sends an email via Resend API when an item is purchased or undone, including the user's name, contact info, and optional message
-- **Item detail page** — View full item info, notes, tracked "Visit Store" link, and purchase/undo buttons
-- **Admin activity logs** — Superusers see per-item activity logs (purchase/undo events), page view counts per user, and store click logs with timestamps in Pacific Time
+- **Email notifications** — Sends an email via Resend API when an item is purchased or undone
+- **Admin activity logs** — Superusers see per-item activity logs, page view counts, and store click logs in Pacific Time
 - **Store click tracking** — Every "Visit Store" click is logged with user and timestamp
-- **OG meta tags** — Open Graph and Twitter Card tags for link previews, with per-item overrides on detail pages
-- **Supabase Storage** — Product images stored in Supabase S3-compatible storage for persistent cloud hosting
-- **Dark theme** — Disco ball background, dark glassmorphism UI with pink/purple accents, Poppins font
+- **OG meta tags** — Open Graph and Twitter Card tags for link previews
+- **Supabase Storage** — Product images stored in Supabase S3-compatible storage
+- **Responsive design** — Hamburger menu on mobile, sticky navbar, glassmorphism dark theme
+- **Success messages** — Flash messages after every action (login, register, purchase, undo, create)
 
 ## Project Structure
 
@@ -101,9 +103,9 @@ wishlist/
 │   └── asgi.py
 ├── wishlist/               # Main application
 │   ├── apps.py
-│   ├── models.py           # User, WishlistItem, Purchase, ItemEvent, ItemView, StoreClick
-│   ├── views.py            # Index, detail, auth, purchase, undo, visit-store views
-│   ├── forms.py            # Registration, Purchase, UndoPurchase forms
+│   ├── models.py           # User, Wishlist, Event, Activity, WishlistItem, Purchase, ItemEvent, ItemView, StoreClick
+│   ├── views.py            # Dashboard, CRUD, auth, purchase, undo, visit-store views
+│   ├── forms.py            # Registration, Wishlist, Event, Activity, Purchase, UndoPurchase forms
 │   ├── email.py            # Resend email notifications
 │   ├── urls.py
 │   ├── admin.py
@@ -143,7 +145,15 @@ wishlist/
 
 | URL | View | Description |
 | --- | --- | --- |
-| `/` | `index` | Wishlist page (login required) |
+| `/` | `dashboard` | User dashboard (login required) |
+| `/wishlist/` | `index` | Wishlist items page |
+| `/wishlist/<id>/` | `wishlist_detail` | Individual wishlist |
+| `/events/` | `events_list` | All events |
+| `/events/<id>/` | `event_detail` | Individual event |
+| `/activities/` | `activities_list` | All activities |
+| `/create/wishlist/` | `create_wishlist` | Create a new wishlist |
+| `/create/event/` | `create_event` | Create a new event |
+| `/create/activity/` | `create_activity` | Create a new activity |
 | `/item/<id>/` | `item_detail` | Item detail with admin logs |
 | `/item/<id>/visit-store/` | `visit_store` | Tracked redirect to store URL |
 | `/item/<id>/purchase/` | `mark_purchased` | Mark item as purchased + email |
@@ -197,16 +207,20 @@ Tests are in `wishlist/tests.py` and cover:
 
 | Area | What's tested |
 | --- | --- |
-| **Models** | User creation/uniqueness, WishlistItem defaults/ordering/cascade, Purchase one-to-one/cascade, ItemEvent types/ordering/cascade, ItemView unique constraint/cascade, StoreClick multiple records/ordering/cascade |
-| **Forms** | RegistrationForm validation (required fields, duplicate email, password mismatch), PurchaseForm confirm checkbox, UndoPurchaseForm optional message |
-| **Auth views** | Register (success, auto-login, errors, redirect if authenticated), Login (success, failure, redirect), Logout (redirect, session cleared) |
+| **Models** | User creation/uniqueness, Wishlist/WishlistItem defaults/ordering/cascade, Event fields/ordering/cascade, Activity fields/ordering/cascade, Purchase one-to-one/cascade, ItemEvent types/ordering/cascade, ItemView unique constraint/cascade, StoreClick records/ordering/cascade |
+| **Forms** | RegistrationForm (required fields, duplicate email, password mismatch), EventForm (required fields, end_time after start_time validation), ActivityForm (title/location required, notes optional), PurchaseForm confirm checkbox, UndoPurchaseForm optional message |
+| **Auth views** | Register (success, auto-login, message, errors, redirect), Login (success, message, failure, redirect), Logout (redirect, message, session cleared) |
+| **Dashboard** | Login required, template, welcome message, 3 sections, wishlists/events/activities display, empty states, user isolation, card links |
+| **Create views** | Create wishlist (login, form, success, message), Create event (login, form, success, time validation, message), Create activity (login, form, success, location required, message) |
+| **Events/Activities lists** | Login required, template, user items, isolation, empty state, back link |
 | **Index view** | Login required, displays user items only, empty state, all sort options, purchased badge/styling, purchase/undo buttons |
-| **Item detail view** | Login required, displays info, OG meta tags with price/store, purchase/undo buttons per status, view counter increments, superuser sees activity log/view stats/store click log, regular users see none of these, 404 |
-| **Purchase view** | Login required, form display, successful purchase + event creation, email sent on success, email not sent on failure, missing confirm rejected, already-purchased redirect, 404, optional message |
-| **Undo view** | Login required, form display, successful undo + event creation, email sent on success, email not sent when item is available, without message, available-item redirect, 404 |
-| **Visit store view** | Login required, redirects to product URL, creates click record, multiple clicks logged, no-URL fallback, 404 |
-| **OG meta tags** | Present on index, login, and register pages; item detail overrides with item-specific title/description/image |
-| **Email utilities** | Purchased email content (name, contact, message, phone handling), undo email content (name, contact, message), skips when not configured, handles API failures gracefully |
+| **Item detail view** | Login required, displays info, OG meta tags, purchase/undo buttons, view counter, superuser logs, 404 |
+| **Purchase view** | Login required, form, success + event + email, confirm required, already-purchased redirect, 404 |
+| **Undo view** | Login required, form, success + event + email, available-item redirect, 404 |
+| **Visit store view** | Login required, redirects, click records, no-URL fallback, 404 |
+| **OG meta tags** | Present on index, login, register; item detail overrides |
+| **Email utilities** | Purchased/undo email content, skips when not configured, handles API failures |
+| **Mobile layout** | Viewport meta on all pages, sticky header, nav elements for auth/anon |
 
 ## License
 

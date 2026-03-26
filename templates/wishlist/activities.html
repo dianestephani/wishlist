@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Activities - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+    <h1 class="page-title">Activities</h1>
+</div>
+
+{% if activities %}
+    <div class="dashboard-list">
+        {% for activity in activities %}
+            <div class="dashboard-list-item">
+                <div class="dashboard-list-content">
+                    <span class="dashboard-list-title">{{ activity.title }}</span>
+                    {% if activity.location %}
+                        <span class="dashboard-list-message">{{ activity.location }}</span>
+                    {% endif %}
+                    {% if activity.notes %}
+                        <span class="dashboard-list-message">{{ activity.notes }}</span>
+                    {% endif %}
+                </div>
+                <span class="dashboard-list-date">{{ activity.created_at|date:"M d, Y" }}</span>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-state">No activities yet.</p>
+{% endif %}
+{% endblock %}

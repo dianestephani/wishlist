@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ wishlist_obj.title }} - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+    <h1 class="page-title">{{ wishlist_obj.title }}</h1>
+    {% if wishlist_obj.description %}
+        <p class="page-description">{{ wishlist_obj.description }}</p>
+    {% endif %}
+</div>
+
+{% if items %}
+    <div class="card-grid">
+        {% for item in items %}
+            <div class="card {% if item.status == 'purchased' %}card-purchased{% endif %}">
+                {% if item.status == "purchased" %}
+                    <div class="purchased-badge">Purchased</div>
+                {% endif %}
+
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.title }}" class="card-image">
+                {% else %}
+                    <div class="card-image card-image-placeholder">No Image</div>
+                {% endif %}
+
+                <div class="card-body">
+                    <h2 class="card-title">{{ item.title }}</h2>
+
+                    {% if item.price is not None %}
+                        <p class="card-price">${{ item.price }}</p>
+                    {% endif %}
+
+                    <div class="card-details">
+                        {% if item.category %}
+                            <span class="card-tag">{{ item.category }}</span>
+                        {% endif %}
+                        {% if item.brand %}
+                            <span class="card-tag">{{ item.brand }}</span>
+                        {% endif %}
+                        {% if item.store %}
+                            <span class="card-tag">{{ item.store }}</span>
+                        {% endif %}
+                    </div>
+
+                    <a href="{% url 'wishlist:item_detail' item.id %}" class="card-link">
+                        View Product
+                    </a>
+
+                    {% if item.status == "available" %}
+                        <button type="button" class="btn-purchased" onclick="openPurchaseModal({{ item.id }}, '{{ item.title|escapejs }}')">
+                            I've purchased this!
+                        </button>
+                    {% elif item.status == "purchased" %}
+                        <button type="button" class="btn-undo" onclick="openUndoModal({{ item.id }}, '{{ item.title|escapejs }}')">
+                            Just kidding!
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-state">No items in this wishlist yet.</p>
+{% endif %}
+{% endblock %}

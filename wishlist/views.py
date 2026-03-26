@@ -1,11 +1,12 @@
+from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .email import send_purchased_email, send_undo_email
-from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
-from .models import ItemEvent, ItemView, Purchase, StoreClick, WishlistItem
+from .forms import ActivityForm, EventForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm
+from .models import Activity, Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
     "price_asc": "price",
@@ -14,6 +15,91 @@ SORT_OPTIONS = {
     "brand": "brand",
     "store": "store",
 }
+
+
+@login_required
+def dashboard(request):
+    wishlists = Wishlist.objects.filter(user=request.user)[:5]
+    events = Event.objects.filter(created_by=request.user)[:5]
+    activities = Activity.objects.filter(created_by=request.user)[:5]
+
+    context = {
+        "wishlists": wishlists,
+        "events": events,
+        "activities": activities,
+    }
+    return render(request, "wishlist/dashboard.html", context)
+
+
+@login_required
+def create_wishlist(request):
+    if request.method == "POST":
+        form = WishlistForm(request.POST)
+        if form.is_valid():
+            wl = form.save(commit=False)
+            wl.user = request.user
+            wl.save()
+            messages.success(request, f'Wishlist "{wl.title}" created!')
+            return redirect("wishlist:wishlist_detail", wishlist_id=wl.pk)
+    else:
+        form = WishlistForm()
+    return render(request, "wishlist/create_wishlist.html", {"form": form})
+
+
+@login_required
+def create_event(request):
+    if request.method == "POST":
+        form = EventForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.created_by = request.user
+            event.save()
+            messages.success(request, f'Event "{event.title}" created!')
+            return redirect("wishlist:event_detail", event_id=event.pk)
+    else:
+        form = EventForm()
+    return render(request, "wishlist/create_event.html", {"form": form})
+
+
+@login_required
+def create_activity(request):
+    if request.method == "POST":
+        form = ActivityForm(request.POST)
+        if form.is_valid():
+            activity = form.save(commit=False)
+            activity.created_by = request.user
+            activity.save()
+            messages.success(request, f'Activity "{activity.title}" created!')
+            return redirect("wishlist:activities")
+    else:
+        form = ActivityForm()
+    return render(request, "wishlist/create_activity.html", {"form": form})
+
+
+@login_required
+def wishlist_detail(request, wishlist_id):
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, user=request.user)
+    items = WishlistItem.objects.filter(user=request.user).select_related("purchase")
+    context = {"wishlist_obj": wl, "items": items}
+    return render(request, "wishlist/wishlist_detail.html", context)
+
+
+@login_required
+def events_list(request):
+    events = Event.objects.filter(created_by=request.user)
+    return render(request, "wishlist/events.html", {"events": events})
+
+
+@login_required
+def event_detail(request, event_id):
+    event = get_object_or_404(Event, pk=event_id, created_by=request.user)
+    return render(request, "wishlist/event_detail.html", {"event": event})
+
+
+@login_required
+def activities_list(request):
+    activities = Activity.objects.filter(created_by=request.user)
+    return render(request, "wishlist/activities.html", {"activities": activities})
 
 
 @login_required
@@ -99,6 +185,7 @@ def mark_purchased(request, item_id):
             item.status = WishlistItem.Status.PURCHASED
             item.save()
             send_purchased_email(request.user, item, message)
+            messages.success(request, f'"{item.title}" has been marked as purchased. Thank you!')
             return redirect("wishlist:index")
     else:
         form = PurchaseForm()
@@ -127,6 +214,7 @@ def undo_purchase(request, item_id):
             item.status = WishlistItem.Status.AVAILABLE
             item.save()
             send_undo_email(request.user, item, message)
+            messages.info(request, f'"{item.title}" has been reverted to available.')
             return redirect("wishlist:index")
     else:
         form = UndoPurchaseForm()
@@ -136,14 +224,15 @@ def undo_purchase(request, item_id):
 
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect("wishlist:index")
+        return redirect("wishlist:dashboard")
 
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("wishlist:index")
+            messages.success(request, f"Welcome, {user.first_name or user.username}! Your account has been created.")
+            return redirect("wishlist:dashboard")
     else:
         form = RegistrationForm()
 
@@ -152,13 +241,15 @@ def register_view(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect("wishlist:index")
+        return redirect("wishlist:dashboard")
 
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            login(request, form.get_user())
-            return redirect("wishlist:index")
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, f"Welcome back, {user.first_name or user.username}!")
+            return redirect("wishlist:dashboard")
     else:
         form = AuthenticationForm()
 
@@ -167,4 +258,5 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
+    messages.info(request, "You have been logged out.")
     return redirect("wishlist:login")

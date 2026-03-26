@@ -2,17 +2,19 @@
 Django settings for wishlist_app project.
 """
 
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-CHANGE-ME-before-deploying-to-production"
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-CHANGE-ME-before-deploying-to-production",
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = ["wishlist-chi-flame.vercel.app", "127.0.0.1"]
+ALLOWED_HOSTS = ["wishlist-chi-flame.vercel.app", "127.0.0.1", "localhost"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -74,11 +76,11 @@ TIME_ZONE = "America/Los_Angeles"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 STORAGES = {
@@ -86,6 +88,10 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+# WhiteNoise serves static files in production even when DEBUG=False.
+# Also allow it to find files via STATICFILES_FINDERS during development.
+WHITENOISE_USE_FINDERS = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -96,8 +102,6 @@ LOGIN_REDIRECT_URL = "wishlist:index"
 LOGOUT_REDIRECT_URL = "wishlist:login"
 
 # Resend email configuration
-import os
-
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "wishlist@example.com")
 NOTIFICATION_TO_EMAIL = os.environ.get("NOTIFICATION_TO_EMAIL", "")

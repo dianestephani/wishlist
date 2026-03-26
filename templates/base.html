@@ -35,6 +35,14 @@
             </div>
             <div class="nav-links">
                 {% if user.is_authenticated %}
+                    <div class="create-dropdown">
+                        <button type="button" class="btn-create" onclick="toggleCreateMenu()">Create +</button>
+                        <div id="create-menu" class="create-menu" style="display: none;">
+                            <a href="{% url 'wishlist:create_wishlist' %}">Create Wishlist</a>
+                            <a href="{% url 'wishlist:create_event' %}">Create Event</a>
+                            <a href="{% url 'wishlist:create_activity' %}">Create Activity</a>
+                        </div>
+                    </div>
                     <span class="nav-user">{{ user.username }}</span>
                     <a href="{% url 'wishlist:logout' %}">Logout</a>
                 {% else %}
@@ -53,6 +61,10 @@
                 <a href="{% url 'wishlist:index' %}">Wishlists</a>
                 <a href="{% url 'wishlist:events' %}">Events</a>
                 <a href="{% url 'wishlist:activities' %}">Activities</a>
+                <div class="mobile-nav-divider"></div>
+                <a href="{% url 'wishlist:create_wishlist' %}">Create Wishlist</a>
+                <a href="{% url 'wishlist:create_event' %}">Create Event</a>
+                <a href="{% url 'wishlist:create_activity' %}">Create Activity</a>
                 <div class="mobile-nav-divider"></div>
                 <span class="mobile-nav-user">{{ user.username }}</span>
                 <a href="{% url 'wishlist:logout' %}">Logout</a>
@@ -96,6 +108,21 @@
             hamburger.classList.remove("active");
         }
     }
+
+    function toggleCreateMenu() {
+        var menu = document.getElementById("create-menu");
+        if (menu) {
+            menu.style.display = menu.style.display === "none" ? "block" : "none";
+        }
+    }
+
+    document.addEventListener("click", function (e) {
+        var dropdown = document.querySelector(".create-dropdown");
+        var menu = document.getElementById("create-menu");
+        if (dropdown && menu && !dropdown.contains(e.target)) {
+            menu.style.display = "none";
+        }
+    });
     </script>
     {% block extra_js %}{% endblock %}
 </body>

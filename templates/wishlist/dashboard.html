@@ -5,17 +5,7 @@
 
 {% block content %}
 <div class="dashboard">
-    <div class="dashboard-header">
-        <h1 class="dashboard-title">Welcome, {{ user.first_name|default:user.username }}!</h1>
-        <div class="create-dropdown">
-            <button type="button" class="btn-create" onclick="toggleCreateMenu()">Create +</button>
-            <div id="create-menu" class="create-menu" style="display: none;">
-                <a href="{% url 'wishlist:create_wishlist' %}">Create Wishlist</a>
-                <a href="{% url 'wishlist:create_event' %}">Create Event</a>
-                <a href="{% url 'wishlist:create_activity' %}">Create Activity</a>
-            </div>
-        </div>
-    </div>
+    <h1 class="dashboard-title">Welcome, {{ user.first_name|default:user.username }}!</h1>
 
     <div class="dashboard-cards">
         <!-- Wishlists -->
@@ -47,7 +37,15 @@
                     {% for event in events %}
                         <li>
                             <a href="{% url 'wishlist:event_detail' event.id %}" class="dashboard-card-item-link">
-                                <span class="dashboard-card-item-title">{{ event.title }}</span>
+                                <div class="dashboard-card-item-details">
+                                    <span class="dashboard-card-item-title">{{ event.title }}</span>
+                                    {% if event.start_time %}
+                                        <span class="dashboard-card-item-sub">{{ event.start_time|date:"g:i A" }}{% if event.end_time %} — {{ event.end_time|date:"g:i A" }}{% endif %}</span>
+                                    {% endif %}
+                                    {% if event.address %}
+                                        <span class="dashboard-card-item-sub">{{ event.address }}</span>
+                                    {% endif %}
+                                </div>
                                 <span class="dashboard-card-item-date">{{ event.date|date:"M d, Y" }}</span>
                             </a>
                         </li>
@@ -68,7 +66,12 @@
                     {% for activity in activities %}
                         <li>
                             <a href="{% url 'wishlist:activities' %}" class="dashboard-card-item-link">
-                                <span class="dashboard-card-item-title">{{ activity.title }}</span>
+                                <div class="dashboard-card-item-details">
+                                    <span class="dashboard-card-item-title">{{ activity.title }}</span>
+                                    {% if activity.location %}
+                                        <span class="dashboard-card-item-sub">{{ activity.location }}</span>
+                                    {% endif %}
+                                </div>
                                 <span class="dashboard-card-item-date">{{ activity.created_at|date:"M d, Y" }}</span>
                             </a>
                         </li>
@@ -81,20 +84,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    function toggleCreateMenu() {
-        var menu = document.getElementById("create-menu");
-        menu.style.display = menu.style.display === "none" ? "block" : "none";
-    }
-
-    document.addEventListener("click", function (e) {
-        var dropdown = document.querySelector(".create-dropdown");
-        if (dropdown && !dropdown.contains(e.target)) {
-            document.getElementById("create-menu").style.display = "none";
-        }
-    });
-</script>
 {% endblock %}

@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import Activity, Event, Wishlist
+from .models import Activity, Event, Wishlist, WishlistItem
 
 User = get_user_model()
 
@@ -32,6 +32,31 @@ class RegistrationForm(UserCreationForm):
         return email
 
 
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["username", "first_name", "last_name", "email", "phone_number"]
+        widgets = {
+            "username": forms.TextInput(attrs={"placeholder": "Username"}),
+            "first_name": forms.TextInput(attrs={"placeholder": "First name"}),
+            "last_name": forms.TextInput(attrs={"placeholder": "Last name"}),
+            "email": forms.EmailInput(attrs={"placeholder": "Email"}),
+            "phone_number": forms.TextInput(attrs={"placeholder": "Phone number"}),
+        }
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("A user with this email already exists.")
+        return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get("username")
+        if User.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("This username is already taken.")
+        return username
+
+
 class WishlistForm(forms.ModelForm):
     class Meta:
         model = Wishlist
@@ -39,6 +64,28 @@ class WishlistForm(forms.ModelForm):
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3, "placeholder": "Description (optional)"}),
         }
+
+
+class WishlistItemForm(forms.ModelForm):
+    class Meta:
+        model = WishlistItem
+        fields = ["title", "product_url", "price", "category", "brand", "store", "image", "notes"]
+        widgets = {
+            "title": forms.TextInput(attrs={"placeholder": "Item name"}),
+            "product_url": forms.URLInput(attrs={"placeholder": "https://..."}),
+            "price": forms.NumberInput(attrs={"placeholder": "0.00", "step": "0.01"}),
+            "category": forms.TextInput(attrs={"placeholder": "e.g. Gaming, Beauty"}),
+            "brand": forms.TextInput(attrs={"placeholder": "e.g. Nintendo, OUAI"}),
+            "store": forms.TextInput(attrs={"placeholder": "e.g. Best Buy, Ulta"}),
+            "notes": forms.Textarea(attrs={"rows": 2, "placeholder": "Notes (optional)"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.fields:
+            if field_name != "title":
+                self.fields[field_name].required = False
+        self.fields["title"].required = True
 
 
 class EventForm(forms.ModelForm):

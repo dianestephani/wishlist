@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+    <h1 class="page-title">My Profile</h1>
+</div>
+
+<div class="profile-card">
+    <div class="profile-header">
+        <div class="profile-avatar">{{ user.first_name|make_list|first|default:"?" }}{{ user.last_name|make_list|first|default:"" }}</div>
+        <div class="profile-name">
+            <h2>{{ user.first_name }} {{ user.last_name }}</h2>
+            <p class="profile-username">@{{ user.username }}</p>
+        </div>
+    </div>
+
+    <div class="profile-details">
+        <div class="profile-row">
+            <span class="profile-label">Username</span>
+            <span>{{ user.username }}</span>
+        </div>
+        <div class="profile-row">
+            <span class="profile-label">First Name</span>
+            <span>{{ user.first_name|default:"—" }}</span>
+        </div>
+        <div class="profile-row">
+            <span class="profile-label">Last Name</span>
+            <span>{{ user.last_name|default:"—" }}</span>
+        </div>
+        <div class="profile-row">
+            <span class="profile-label">Email</span>
+            <span>{{ user.email }}</span>
+        </div>
+        <div class="profile-row">
+            <span class="profile-label">Phone</span>
+            <span>{{ user.phone_number|default:"—" }}</span>
+        </div>
+        <div class="profile-row">
+            <span class="profile-label">Member Since</span>
+            <span>{{ user.date_joined|date:"M d, Y" }}</span>
+        </div>
+    </div>
+
+    <div class="detail-actions">
+        <a href="{% url 'wishlist:edit_profile' %}" class="btn-edit">Edit Profile</a>
+        <a href="{% url 'wishlist:delete_account' %}" class="btn-delete">Delete Account</a>
+    </div>
+</div>
+{% endblock %}

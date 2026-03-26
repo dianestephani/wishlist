@@ -5,7 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .email import send_purchased_email, send_undo_email
-from .forms import ActivityForm, EventForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm
+from .forms import ActivityForm, EventForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
 from .models import Activity, Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
@@ -35,15 +35,21 @@ def dashboard(request):
 def create_wishlist(request):
     if request.method == "POST":
         form = WishlistForm(request.POST)
-        if form.is_valid():
+        item_form = WishlistItemForm(request.POST, request.FILES, prefix="item")
+        if form.is_valid() and item_form.is_valid():
             wl = form.save(commit=False)
             wl.user = request.user
             wl.save()
+            if item_form.cleaned_data.get("title"):
+                item = item_form.save(commit=False)
+                item.user = request.user
+                item.save()
             messages.success(request, f'Wishlist "{wl.title}" created!')
             return redirect("wishlist:wishlist_detail", wishlist_id=wl.pk)
     else:
         form = WishlistForm()
-    return render(request, "wishlist/create_wishlist.html", {"form": form})
+        item_form = WishlistItemForm(prefix="item")
+    return render(request, "wishlist/create_wishlist.html", {"form": form, "item_form": item_form})
 
 
 @login_required

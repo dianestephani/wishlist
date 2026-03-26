@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import Activity, Event, Wishlist
+from .models import Activity, Event, Wishlist, WishlistItem
 
 User = get_user_model()
 
@@ -39,6 +39,28 @@ class WishlistForm(forms.ModelForm):
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3, "placeholder": "Description (optional)"}),
         }
+
+
+class WishlistItemForm(forms.ModelForm):
+    class Meta:
+        model = WishlistItem
+        fields = ["title", "product_url", "price", "category", "brand", "store", "image", "notes"]
+        widgets = {
+            "title": forms.TextInput(attrs={"placeholder": "Item name"}),
+            "product_url": forms.URLInput(attrs={"placeholder": "https://..."}),
+            "price": forms.NumberInput(attrs={"placeholder": "0.00", "step": "0.01"}),
+            "category": forms.TextInput(attrs={"placeholder": "e.g. Gaming, Beauty"}),
+            "brand": forms.TextInput(attrs={"placeholder": "e.g. Nintendo, OUAI"}),
+            "store": forms.TextInput(attrs={"placeholder": "e.g. Best Buy, Ulta"}),
+            "notes": forms.Textarea(attrs={"rows": 2, "placeholder": "Notes (optional)"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.fields:
+            if field_name != "title":
+                self.fields[field_name].required = False
+        self.fields["title"].required = True
 
 
 class EventForm(forms.ModelForm):

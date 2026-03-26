@@ -2178,6 +2178,28 @@ class AutoFriendSignalTests(TestCase):
             Friendship.objects.filter(user=reg_user, friend=self.diane).exists()
         )
 
+    def test_new_user_notifies_diane(self):
+        new_user = User.objects.create_user(
+            username="newuser", email="new@example.com", password="pass123",
+            first_name="Jane", last_name="Doe",
+        )
+        notif = Notification.objects.filter(recipient=self.diane).first()
+        self.assertIsNotNone(notif)
+        self.assertIn("Jane Doe", notif.subject)
+        self.assertIn("newuser", notif.content)
+        self.assertEqual(notif.sender, new_user)
+        self.assertEqual(notif.type, "activity")
+
+    def test_diane_creation_no_self_notification(self):
+        self.assertEqual(
+            Notification.objects.filter(recipient=self.diane, sender=self.diane).count(), 0
+        )
+
+    def test_no_notification_if_diane_missing(self):
+        self.diane.delete()
+        User.objects.create_user(username="newuser", email="new@example.com", password="pass123")
+        self.assertEqual(Notification.objects.count(), 0)
+
 
 # ---------------------------------------------------------------------------
 # Notifications API tests

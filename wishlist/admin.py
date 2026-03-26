@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User, WishlistItem
+from .models import Purchase, User, WishlistItem
 
 
 @admin.register(User)
@@ -24,3 +24,10 @@ class WishlistItemAdmin(admin.ModelAdmin):
     list_filter = ("status", "category", "store")
     search_fields = ("title", "brand", "store")
     readonly_fields = ("created_at",)
+
+
+@admin.register(Purchase)
+class PurchaseAdmin(admin.ModelAdmin):
+    list_display = ("item", "purchased_by", "purchased_at")
+    list_filter = ("purchased_at",)
+    readonly_fields = ("purchased_at",)

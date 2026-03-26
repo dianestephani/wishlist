@@ -80,3 +80,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "wishlist.User"
+
+LOGIN_URL = "wishlist:login"
+LOGIN_REDIRECT_URL = "wishlist:index"
+LOGOUT_REDIRECT_URL = "wishlist:login"

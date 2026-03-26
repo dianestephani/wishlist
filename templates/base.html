@@ -12,6 +12,15 @@
     <header>
         <nav>
             <a href="{% url 'wishlist:index' %}">Wishlist</a>
+            <div class="nav-links">
+                {% if user.is_authenticated %}
+                    <span class="nav-user">{{ user.username }}</span>
+                    <a href="{% url 'wishlist:logout' %}">Logout</a>
+                {% else %}
+                    <a href="{% url 'wishlist:login' %}">Login</a>
+                    <a href="{% url 'wishlist:register' %}">Register</a>
+                {% endif %}
+            </div>
         </nav>
     </header>
 

@@ -11,11 +11,12 @@ ADMIN_EMAIL = "diane.stephani@gmail.com"
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def auto_add_admin_friend(sender, instance, created, **kwargs):
-    """When a new user registers, automatically add Diane as their friend."""
+    """When a new user registers, automatically add Diane as a mutual friend
+    and notify Diane about the new signup."""
     if not created:
         return
 
-    from .models import Friendship, User
+    from .models import Friendship, Notification, User
 
     try:
         admin_user = User.objects.get(email=ADMIN_EMAIL)
@@ -27,3 +28,13 @@ def auto_add_admin_friend(sender, instance, created, **kwargs):
         return
 
     Friendship.objects.get_or_create(user=instance, friend=admin_user)
+    Friendship.objects.get_or_create(user=admin_user, friend=instance)
+
+    name = f"{instance.first_name} {instance.last_name}".strip() or instance.username
+    Notification.objects.create(
+        recipient=admin_user,
+        sender=instance,
+        type=Notification.NotifType.ACTIVITY,
+        subject=f"New user signed up: {name}",
+        content=f"{name} (@{instance.username}) just created an account and was added as your friend.",
+    )

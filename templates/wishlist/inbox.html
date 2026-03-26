@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Inbox - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+    <h1 class="page-title">Messages</h1>
+</div>
+
+{% if conversations %}
+    <div class="inbox-list">
+        {% for item in conversations %}
+            <a href="{% url 'wishlist:conversation_detail' item.convo.pk %}" class="inbox-item {% if item.unread %}inbox-unread{% endif %}">
+                <div class="inbox-avatar" style="background: {{ item.other.avatar_color|default:'#5eead4' }}">{{ item.other.initials }}</div>
+                <div class="inbox-content">
+                    <div class="inbox-top">
+                        <span class="inbox-name">{{ item.other.first_name }} {{ item.other.last_name }}</span>
+                        {% if item.last_message %}
+                            <span class="inbox-time">{{ item.last_message.created_at|timesince }} ago</span>
+                        {% endif %}
+                    </div>
+                    {% if item.last_message %}
+                        <p class="inbox-subject">{{ item.last_message.subject }}</p>
+                        <p class="inbox-preview">{{ item.last_message.content|truncatewords:12 }}</p>
+                    {% endif %}
+                    {% if item.unread %}
+                        <span class="inbox-badge">{{ item.unread }}</span>
+                    {% endif %}
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-state">No conversations yet. Message a friend to get started!</p>
+{% endif %}
+{% endblock %}

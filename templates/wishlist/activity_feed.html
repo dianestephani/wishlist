@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Activity - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+    <h1 class="page-title">Activity Feed</h1>
+</div>
+
+{% if notifications %}
+    <div class="activity-list">
+        {% for notif in notifications %}
+            <div class="activity-item {% if not notif.is_read %}activity-unread{% endif %}">
+                {% if notif.sender %}
+                    <div class="activity-avatar" style="background: {{ notif.sender.avatar_color|default:'#5eead4' }}">{{ notif.sender.initials }}</div>
+                {% else %}
+                    <div class="activity-avatar" style="background: #5eead4">?</div>
+                {% endif %}
+                <div class="activity-content">
+                    <span class="activity-type-badge activity-type-{{ notif.type }}">{{ notif.get_type_display }}</span>
+                    <p class="activity-subject">{{ notif.subject }}</p>
+                    {% if notif.content %}
+                        <p class="activity-preview">{{ notif.content|truncatewords:20 }}</p>
+                    {% endif %}
+                    <span class="activity-time">{{ notif.created_at|timesince }} ago</span>
+                </div>
+                {% if notif.sender %}
+                    <a href="{% url 'wishlist:start_conversation' notif.sender.pk %}?subject=Re: {{ notif.subject|urlencode }}" class="btn-reply">Reply</a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-state">No activity yet.</p>
+{% endif %}
+{% endblock %}

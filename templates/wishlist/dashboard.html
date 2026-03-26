@@ -63,18 +63,16 @@
         <!-- Activities -->
         <div class="dashboard-card">
             <h2>Activities</h2>
-            {% if recent_purchases %}
+            {% if activities %}
                 <ul class="dashboard-card-list">
-                    {% timezone "America/Los_Angeles" %}
-                    {% for purchase in recent_purchases %}
+                    {% for activity in activities %}
                         <li>
-                            <a href="{% url 'wishlist:item_detail' purchase.item.id %}" class="dashboard-card-item-link">
-                                <span class="dashboard-card-item-title">{{ purchase.item.title }}</span>
-                                <span class="dashboard-card-item-date">{{ purchase.purchased_at|date:"M d, Y" }}</span>
+                            <a href="{% url 'wishlist:activities' %}" class="dashboard-card-item-link">
+                                <span class="dashboard-card-item-title">{{ activity.title }}</span>
+                                <span class="dashboard-card-item-date">{{ activity.created_at|date:"M d, Y" }}</span>
                             </a>
                         </li>
                     {% endfor %}
-                    {% endtimezone %}
                 </ul>
             {% else %}
                 <p class="dashboard-card-empty">No activities yet.</p>

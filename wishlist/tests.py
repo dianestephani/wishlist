@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from .email import send_purchased_email, send_undo_email
 from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
-from .models import Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
+from .models import Activity, Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 User = get_user_model()
 
@@ -471,9 +471,9 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "No wishlists yet")
 
     def test_shows_event_title_and_date(self):
-        from django.utils import timezone
+        from datetime import date
         Event.objects.create(
-            user=self.user, title="Birthday Party", date=timezone.now()
+            created_by=self.user, title="Birthday Party", date=date.today()
         )
         response = self.client.get(self.url)
         self.assertContains(response, "Birthday Party")
@@ -482,11 +482,10 @@ class DashboardViewTests(TestCase):
         response = self.client.get(self.url)
         self.assertContains(response, "No events yet")
 
-    def test_shows_recent_purchases(self):
-        item = WishlistItem.objects.create(user=self.user, title="Bought Item")
-        Purchase.objects.create(item=item, purchased_by=self.user)
+    def test_shows_recent_activities(self):
+        Activity.objects.create(created_by=self.user, title="Hiking Trip")
         response = self.client.get(self.url)
-        self.assertContains(response, "Bought Item")
+        self.assertContains(response, "Hiking Trip")
 
     def test_shows_empty_activities(self):
         response = self.client.get(self.url)
@@ -529,17 +528,17 @@ class EventsListViewTests(TestCase):
         self.assertTemplateUsed(response, "wishlist/events.html")
 
     def test_shows_user_events(self):
-        from django.utils import timezone
-        Event.objects.create(user=self.user, title="My Party", date=timezone.now())
+        from datetime import date
+        Event.objects.create(created_by=self.user, title="My Party", date=date.today())
         response = self.client.get(self.url)
         self.assertContains(response, "My Party")
 
     def test_does_not_show_other_users_events(self):
-        from django.utils import timezone
+        from datetime import date
         other = User.objects.create_user(
             username="other", email="other@example.com", password="pass123"
         )
-        Event.objects.create(user=other, title="Not My Party", date=timezone.now())
+        Event.objects.create(created_by=other, title="Not My Party", date=date.today())
         response = self.client.get(self.url)
         self.assertNotContains(response, "Not My Party")
 
@@ -573,12 +572,13 @@ class ActivitiesListViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "wishlist/activities.html")
 
-    def test_shows_user_purchases(self):
-        item = WishlistItem.objects.create(user=self.user, title="Purchased Thing")
-        Purchase.objects.create(item=item, purchased_by=self.user, message="Got it")
+    def test_shows_user_activities(self):
+        Activity.objects.create(
+            created_by=self.user, title="Beach Day", location="Santa Cruz, CA"
+        )
         response = self.client.get(self.url)
-        self.assertContains(response, "Purchased Thing")
-        self.assertContains(response, "Got it")
+        self.assertContains(response, "Beach Day")
+        self.assertContains(response, "Santa Cruz, CA")
 
     def test_shows_empty_state(self):
         response = self.client.get(self.url)

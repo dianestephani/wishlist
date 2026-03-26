@@ -13,18 +13,15 @@
     <div class="dashboard-list">
         {% timezone "America/Los_Angeles" %}
         {% for event in events %}
-            <div class="dashboard-list-item">
+            <a href="{% url 'wishlist:event_detail' event.id %}" class="dashboard-list-item" style="text-decoration: none; color: inherit;">
                 <div class="dashboard-list-content">
                     <span class="dashboard-list-title">{{ event.title }}</span>
-                    {% if event.description %}
-                        <span class="dashboard-list-message">{{ event.description }}</span>
-                    {% endif %}
-                    {% if event.location %}
-                        <span class="dashboard-list-message">{{ event.location }}</span>
+                    {% if event.address %}
+                        <span class="dashboard-list-message">{{ event.address }}</span>
                     {% endif %}
                 </div>
-                <span class="dashboard-list-date">{{ event.date|date:"M d, Y g:i A" }}</span>
-            </div>
+                <span class="dashboard-list-date">{{ event.date|date:"M d, Y" }}</span>
+            </a>
         {% endfor %}
         {% endtimezone %}
     </div>

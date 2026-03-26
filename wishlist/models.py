@@ -29,19 +29,40 @@ class Wishlist(models.Model):
 
 
 class Event(models.Model):
-    user = models.ForeignKey(
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="events_created",
     )
     title = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    date = models.DateTimeField()
-    location = models.CharField(max_length=255, blank=True)
+    date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+    address = models.CharField(max_length=500, blank=True)
+    notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-date"]
+
+    def __str__(self):
+        return self.title
+
+
+class Activity(models.Model):
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="activities_created",
+    )
+    title = models.CharField(max_length=255)
+    location = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name_plural = "activities"
 
     def __str__(self):
         return self.title

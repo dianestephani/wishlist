@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load tz %}
 
 {% block title %}Activities - Wishlist{% endblock %}
 
@@ -9,21 +8,22 @@
     <h1 class="page-title">Activities</h1>
 </div>
 
-{% if purchases %}
+{% if activities %}
     <div class="dashboard-list">
-        {% timezone "America/Los_Angeles" %}
-        {% for purchase in purchases %}
+        {% for activity in activities %}
             <div class="dashboard-list-item">
                 <div class="dashboard-list-content">
-                    <span class="dashboard-list-title">{{ purchase.item.title }}</span>
-                    {% if purchase.message %}
-                        <span class="dashboard-list-message">"{{ purchase.message }}"</span>
+                    <span class="dashboard-list-title">{{ activity.title }}</span>
+                    {% if activity.location %}
+                        <span class="dashboard-list-message">{{ activity.location }}</span>
+                    {% endif %}
+                    {% if activity.notes %}
+                        <span class="dashboard-list-message">{{ activity.notes }}</span>
                     {% endif %}
                 </div>
-                <span class="dashboard-list-date">{{ purchase.purchased_at|date:"M d, Y g:i A" }}</span>
+                <span class="dashboard-list-date">{{ activity.created_at|date:"M d, Y" }}</span>
             </div>
         {% endfor %}
-        {% endtimezone %}
     </div>
 {% else %}
     <p class="empty-state">No activities yet.</p>

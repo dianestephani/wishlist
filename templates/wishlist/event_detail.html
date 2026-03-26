@@ -13,20 +13,29 @@
     {% timezone "America/Los_Angeles" %}
     <div class="event-detail-row">
         <span class="event-detail-label">Date</span>
-        <span>{{ event.date|date:"l, F d, Y \a\t g:i A T" }}</span>
+        <span>{{ event.date|date:"l, F d, Y" }}</span>
     </div>
 
-    {% if event.location %}
+    {% if event.start_time %}
         <div class="event-detail-row">
-            <span class="event-detail-label">Location</span>
-            <span>{{ event.location }}</span>
+            <span class="event-detail-label">Time</span>
+            <span>
+                {{ event.start_time|date:"g:i A" }}{% if event.end_time %} — {{ event.end_time|date:"g:i A" }}{% endif %}
+            </span>
         </div>
     {% endif %}
 
-    {% if event.description %}
+    {% if event.address %}
         <div class="event-detail-row">
-            <span class="event-detail-label">Description</span>
-            <span>{{ event.description|linebreaksbr }}</span>
+            <span class="event-detail-label">Address</span>
+            <span>{{ event.address }}</span>
+        </div>
+    {% endif %}
+
+    {% if event.notes %}
+        <div class="event-detail-row">
+            <span class="event-detail-label">Notes</span>
+            <span>{{ event.notes|linebreaksbr }}</span>
         </div>
     {% endif %}
     {% endtimezone %}

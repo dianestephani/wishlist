@@ -44,11 +44,24 @@ class EventForm(forms.ModelForm):
     class Meta:
         from .models import Event
         model = Event
-        fields = ["title", "description", "date", "location"]
+        fields = ["title", "date", "start_time", "end_time", "address", "notes"]
         widgets = {
-            "description": forms.Textarea(attrs={"rows": 3, "placeholder": "Description (optional)"}),
-            "date": forms.DateTimeInput(attrs={"type": "datetime-local"}),
-            "location": forms.TextInput(attrs={"placeholder": "Location (optional)"}),
+            "date": forms.DateInput(attrs={"type": "date"}),
+            "start_time": forms.TimeInput(attrs={"type": "time"}),
+            "end_time": forms.TimeInput(attrs={"type": "time"}),
+            "address": forms.TextInput(attrs={"placeholder": "Address (optional)"}),
+            "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Notes (optional)"}),
+        }
+
+
+class ActivityForm(forms.ModelForm):
+    class Meta:
+        from .models import Activity
+        model = Activity
+        fields = ["title", "location", "notes"]
+        widgets = {
+            "location": forms.TextInput(attrs={"placeholder": "City, State (optional)"}),
+            "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Notes (optional)"}),
         }
 
 

@@ -5,8 +5,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .email import send_purchased_email, send_undo_email
-from .forms import EventForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm
-from .models import Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
+from .forms import ActivityForm, EventForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm
+from .models import Activity, Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
     "price_asc": "price",
@@ -20,13 +20,13 @@ SORT_OPTIONS = {
 @login_required
 def dashboard(request):
     wishlists = Wishlist.objects.filter(user=request.user)[:5]
-    events = Event.objects.filter(user=request.user)[:5]
-    recent_purchases = Purchase.objects.filter(purchased_by=request.user).select_related("item")[:5]
+    events = Event.objects.filter(created_by=request.user)[:5]
+    activities = Activity.objects.filter(created_by=request.user)[:5]
 
     context = {
         "wishlists": wishlists,
         "events": events,
-        "recent_purchases": recent_purchases,
+        "activities": activities,
     }
     return render(request, "wishlist/dashboard.html", context)
 
@@ -52,7 +52,7 @@ def create_event(request):
         form = EventForm(request.POST)
         if form.is_valid():
             event = form.save(commit=False)
-            event.user = request.user
+            event.created_by = request.user
             event.save()
             messages.success(request, f'Event "{event.title}" created!')
             return redirect("wishlist:event_detail", event_id=event.pk)
@@ -63,25 +63,17 @@ def create_event(request):
 
 @login_required
 def create_activity(request):
-    """Log a manual activity/purchase note."""
-    items = WishlistItem.objects.filter(user=request.user, status=WishlistItem.Status.AVAILABLE)
     if request.method == "POST":
-        item_id = request.POST.get("item")
-        message = request.POST.get("message", "")
-        item = get_object_or_404(WishlistItem, pk=item_id)
-        Purchase.objects.create(item=item, purchased_by=request.user, message=message)
-        ItemEvent.objects.create(
-            item=item,
-            event_type=ItemEvent.EventType.PURCHASED,
-            user=request.user,
-            message=message,
-        )
-        item.status = WishlistItem.Status.PURCHASED
-        item.save()
-        send_purchased_email(request.user, item, message)
-        messages.success(request, f'"{item.title}" has been marked as purchased!')
-        return redirect("wishlist:dashboard")
-    return render(request, "wishlist/create_activity.html", {"items": items})
+        form = ActivityForm(request.POST)
+        if form.is_valid():
+            activity = form.save(commit=False)
+            activity.created_by = request.user
+            activity.save()
+            messages.success(request, f'Activity "{activity.title}" created!')
+            return redirect("wishlist:activities")
+    else:
+        form = ActivityForm()
+    return render(request, "wishlist/create_activity.html", {"form": form})
 
 
 @login_required
@@ -94,20 +86,20 @@ def wishlist_detail(request, wishlist_id):
 
 @login_required
 def events_list(request):
-    events = Event.objects.filter(user=request.user)
+    events = Event.objects.filter(created_by=request.user)
     return render(request, "wishlist/events.html", {"events": events})
 
 
 @login_required
 def event_detail(request, event_id):
-    event = get_object_or_404(Event, pk=event_id, user=request.user)
+    event = get_object_or_404(Event, pk=event_id, created_by=request.user)
     return render(request, "wishlist/event_detail.html", {"event": event})
 
 
 @login_required
 def activities_list(request):
-    purchases = Purchase.objects.filter(purchased_by=request.user).select_related("item")
-    return render(request, "wishlist/activities.html", {"purchases": purchases})
+    activities = Activity.objects.filter(created_by=request.user)
+    return render(request, "wishlist/activities.html", {"activities": activities})
 
 
 @login_required

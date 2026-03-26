@@ -5,6 +5,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ActivityForm, EventForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
+from django.http import JsonResponse
+
 from .models import Activity, Event, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
@@ -238,6 +240,27 @@ def delete_account(request):
         messages.info(request, "Your account has been deleted.")
         return redirect("wishlist:login")
     return render(request, "wishlist/confirm_delete_account.html")
+
+
+@login_required
+def notifications_api(request):
+    events = (
+        ItemEvent.objects.filter(item__user=request.user)
+        .select_related("item", "user")
+        .order_by("-created_at")[:20]
+    )
+    data = []
+    for event in events:
+        data.append({
+            "id": event.pk,
+            "event_type": event.get_event_type_display(),
+            "item_title": event.item.title,
+            "user": event.user.first_name or event.user.username,
+            "message": event.message,
+            "created_at": event.created_at.isoformat(),
+            "item_id": event.item.pk,
+        })
+    return JsonResponse({"notifications": data})
 
 
 @login_required

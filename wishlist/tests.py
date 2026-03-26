@@ -2149,3 +2149,78 @@ class AutoFriendSignalTests(TestCase):
         self.assertTrue(
             Friendship.objects.filter(user=reg_user, friend=self.diane).exists()
         )
+
+
+# ---------------------------------------------------------------------------
+# Notifications API tests
+# ---------------------------------------------------------------------------
+class NotificationsApiTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.other = User.objects.create_user(
+            username="buyer", email="buyer@example.com", password="pass123",
+            first_name="Jane",
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.item = WishlistItem.objects.create(user=self.user, title="My Item")
+        self.url = reverse("wishlist:notifications_api")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_returns_json(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["content-type"], "application/json")
+
+    def test_returns_empty_when_no_activity(self):
+        response = self.client.get(self.url)
+        data = response.json()
+        self.assertEqual(data["notifications"], [])
+
+    def test_returns_item_events(self):
+        ItemEvent.objects.create(
+            item=self.item, event_type=ItemEvent.EventType.PURCHASED,
+            user=self.other, message="Got it!",
+        )
+        response = self.client.get(self.url)
+        data = response.json()
+        self.assertEqual(len(data["notifications"]), 1)
+        self.assertEqual(data["notifications"][0]["item_title"], "My Item")
+        self.assertEqual(data["notifications"][0]["user"], "Jane")
+        self.assertIn("Purchased", data["notifications"][0]["event_type"])
+        self.assertEqual(data["notifications"][0]["message"], "Got it!")
+
+    def test_ordered_newest_first(self):
+        e1 = ItemEvent.objects.create(
+            item=self.item, event_type=ItemEvent.EventType.PURCHASED, user=self.other,
+        )
+        e2 = ItemEvent.objects.create(
+            item=self.item, event_type=ItemEvent.EventType.UNDONE, user=self.other,
+        )
+        response = self.client.get(self.url)
+        data = response.json()
+        self.assertEqual(data["notifications"][0]["id"], e2.pk)
+        self.assertEqual(data["notifications"][1]["id"], e1.pk)
+
+    def test_only_shows_own_items_activity(self):
+        other_item = WishlistItem.objects.create(user=self.other, title="Not Mine")
+        ItemEvent.objects.create(
+            item=other_item, event_type=ItemEvent.EventType.PURCHASED, user=self.user,
+        )
+        response = self.client.get(self.url)
+        data = response.json()
+        self.assertEqual(len(data["notifications"]), 0)
+
+    def test_limits_to_20(self):
+        for i in range(25):
+            ItemEvent.objects.create(
+                item=self.item, event_type=ItemEvent.EventType.PURCHASED, user=self.other,
+            )
+        response = self.client.get(self.url)
+        data = response.json()
+        self.assertEqual(len(data["notifications"]), 20)

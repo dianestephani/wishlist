@@ -27,6 +27,8 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("profile/edit/", views.edit_profile, name="edit_profile"),
     path("profile/delete/", views.delete_account, name="delete_account"),
+    # Notifications
+    path("api/notifications/", views.notifications_api, name="notifications_api"),
     # Friends
     path("friends/", views.friends, name="friends"),
     path("users/<str:username>/", views.public_profile, name="public_profile"),

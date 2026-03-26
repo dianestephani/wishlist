@@ -1,11 +1,9 @@
 from decimal import Decimal
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
-from .email import send_purchased_email, send_undo_email
 from .forms import ActivityForm, EventForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
 from .models import Activity, Event, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
@@ -1090,15 +1088,6 @@ class MarkPurchasedViewTests(TestCase):
         purchase = Purchase.objects.get(item=self.item)
         self.assertEqual(purchase.message, "")
 
-    @patch("wishlist.views.send_purchased_email")
-    def test_purchase_sends_email(self, mock_send):
-        self.client.post(self.url, {"confirm": True, "message": "Here you go!"})
-        mock_send.assert_called_once_with(self.user, self.item, "Here you go!")
-
-    @patch("wishlist.views.send_purchased_email")
-    def test_failed_purchase_does_not_send_email(self, mock_send):
-        self.client.post(self.url, {"confirm": False})
-        mock_send.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -1150,18 +1139,6 @@ class UndoPurchaseViewTests(TestCase):
         self.assertRedirects(response, reverse("wishlist:index"))
         self.item.refresh_from_db()
         self.assertEqual(self.item.status, WishlistItem.Status.AVAILABLE)
-
-    @patch("wishlist.views.send_undo_email")
-    def test_undo_sends_email(self, mock_send):
-        self.client.post(self.url, {"message": "Oops!"})
-        mock_send.assert_called_once_with(self.user, self.item, "Oops!")
-
-    @patch("wishlist.views.send_undo_email")
-    def test_undo_on_available_item_does_not_send_email(self, mock_send):
-        self.item.status = WishlistItem.Status.AVAILABLE
-        self.item.save()
-        self.client.post(self.url, {})
-        mock_send.assert_not_called()
 
     def test_undo_on_available_item_redirects(self):
         self.item.status = WishlistItem.Status.AVAILABLE
@@ -1432,106 +1409,6 @@ class OGMetaTagTests(TestCase):
         content = response.content.decode()
         self.assertIn('Wishlist App', content)
         self.assertIn('disco-ball.jpeg', content)
-
-
-# ---------------------------------------------------------------------------
-# Email utility tests
-# ---------------------------------------------------------------------------
-class SendPurchasedEmailTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="buyer",
-            email="buyer@example.com",
-            password="pass123",
-            first_name="Jane",
-            last_name="Doe",
-            phone_number="555-1234",
-        )
-        self.owner = User.objects.create_user(
-            username="owner", email="owner@example.com", password="pass123"
-        )
-        self.item = WishlistItem.objects.create(user=self.owner, title="Cool Gift")
-
-    @override_settings(RESEND_API_KEY="", NOTIFICATION_TO_EMAIL="")
-    def test_skips_when_not_configured(self):
-        result = send_purchased_email(self.user, self.item)
-        self.assertIsNone(result)
-
-    @override_settings(RESEND_API_KEY="test_key", NOTIFICATION_TO_EMAIL="diane@example.com", RESEND_FROM_EMAIL="test@example.com")
-    @patch("wishlist.email.resend.Emails.send", return_value={"id": "123"})
-    def test_sends_with_correct_content(self, mock_send):
-        result = send_purchased_email(self.user, self.item, "Happy birthday!")
-        mock_send.assert_called_once()
-        call_args = mock_send.call_args[0][0]
-        self.assertEqual(call_args["to"], ["diane@example.com"])
-        self.assertIn("Cool Gift", call_args["subject"])
-        self.assertIn("Jane Doe", call_args["html"])
-        self.assertIn("buyer@example.com", call_args["html"])
-        self.assertIn("555-1234", call_args["html"])
-        self.assertIn("Happy birthday!", call_args["html"])
-
-    @override_settings(RESEND_API_KEY="test_key", NOTIFICATION_TO_EMAIL="diane@example.com", RESEND_FROM_EMAIL="test@example.com")
-    @patch("wishlist.email.resend.Emails.send", return_value={"id": "123"})
-    def test_sends_without_phone(self, mock_send):
-        self.user.phone_number = ""
-        self.user.save()
-        send_purchased_email(self.user, self.item)
-        call_args = mock_send.call_args[0][0]
-        self.assertNotIn("555-1234", call_args["html"])
-
-    @override_settings(RESEND_API_KEY="test_key", NOTIFICATION_TO_EMAIL="diane@example.com", RESEND_FROM_EMAIL="test@example.com")
-    @patch("wishlist.email.resend.Emails.send", return_value={"id": "123"})
-    def test_sends_without_message(self, mock_send):
-        send_purchased_email(self.user, self.item)
-        call_args = mock_send.call_args[0][0]
-        self.assertNotIn("Their message", call_args["html"])
-
-    @override_settings(RESEND_API_KEY="test_key", NOTIFICATION_TO_EMAIL="diane@example.com", RESEND_FROM_EMAIL="test@example.com")
-    @patch("wishlist.email.resend.Emails.send", side_effect=Exception("API error"))
-    def test_handles_api_failure_gracefully(self, mock_send):
-        result = send_purchased_email(self.user, self.item)
-        self.assertIsNone(result)
-
-
-class SendUndoEmailTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="liar",
-            email="liar@example.com",
-            password="pass123",
-            first_name="John",
-            last_name="Smith",
-            phone_number="555-9999",
-        )
-        self.owner = User.objects.create_user(
-            username="owner", email="owner@example.com", password="pass123"
-        )
-        self.item = WishlistItem.objects.create(user=self.owner, title="Birthday Gift")
-
-    @override_settings(RESEND_API_KEY="", NOTIFICATION_TO_EMAIL="")
-    def test_skips_when_not_configured(self):
-        result = send_undo_email(self.user, self.item)
-        self.assertIsNone(result)
-
-    @override_settings(RESEND_API_KEY="test_key", NOTIFICATION_TO_EMAIL="diane@example.com", RESEND_FROM_EMAIL="test@example.com")
-    @patch("wishlist.email.resend.Emails.send", return_value={"id": "456"})
-    def test_sends_with_correct_content(self, mock_send):
-        result = send_undo_email(self.user, self.item, "Sorry about that")
-        mock_send.assert_called_once()
-        call_args = mock_send.call_args[0][0]
-        self.assertEqual(call_args["to"], ["diane@example.com"])
-        self.assertIn("Birthday Gift", call_args["subject"])
-        self.assertIn("John Smith", call_args["html"])
-        self.assertIn("lied to you", call_args["html"])
-        self.assertIn("liar@example.com", call_args["html"])
-        self.assertIn("555-9999", call_args["html"])
-        self.assertIn("Sorry about that", call_args["html"])
-
-    @override_settings(RESEND_API_KEY="test_key", NOTIFICATION_TO_EMAIL="diane@example.com", RESEND_FROM_EMAIL="test@example.com")
-    @patch("wishlist.email.resend.Emails.send", side_effect=Exception("API error"))
-    def test_handles_api_failure_gracefully(self, mock_send):
-        result = send_undo_email(self.user, self.item)
-        self.assertIsNone(result)
 
 
 # ---------------------------------------------------------------------------

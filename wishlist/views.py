@@ -4,7 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .email import send_purchased_email, send_undo_email
 from .forms import ActivityForm, EventForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
 from .models import Activity, Event, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
@@ -350,7 +349,6 @@ def mark_purchased(request, item_id):
             )
             item.status = WishlistItem.Status.PURCHASED
             item.save()
-            send_purchased_email(request.user, item, message)
             messages.success(request, f'"{item.title}" has been marked as purchased. Thank you!')
             return redirect("wishlist:index")
     else:
@@ -379,7 +377,6 @@ def undo_purchase(request, item_id):
             )
             item.status = WishlistItem.Status.AVAILABLE
             item.save()
-            send_undo_email(request.user, item, message)
             messages.info(request, f'"{item.title}" has been reverted to available.')
             return redirect("wishlist:index")
     else:

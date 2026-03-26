@@ -41,6 +41,7 @@ urlpatterns = [
     path("friends/add/<int:user_id>/", views.send_friend_request, name="send_friend_request"),
     path("friends/request/<int:request_id>/accept/", views.accept_friend_request, name="accept_friend_request"),
     path("friends/request/<int:request_id>/deny/", views.deny_friend_request, name="deny_friend_request"),
+    path("friends/remove/<int:user_id>/", views.remove_friend, name="remove_friend"),
     path("api/friend-requests/", views.friend_requests_api, name="friend_requests_api"),
     path("users/<str:username>/", views.public_profile, name="public_profile"),
     # Events

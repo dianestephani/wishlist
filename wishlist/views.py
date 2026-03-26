@@ -1,23 +1,16 @@
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.shortcuts import get_object_or_404, redirect, render
-
 from django.db.models import Max, Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ActivityForm, EventForm, MessageForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
 from .messaging import get_or_create_conversation, notify, send_message
 from .models import Activity, Conversation, Event, FriendRequest, Friendship, ItemEvent, ItemView, Message, Notification, Purchase, StoreClick, Wishlist, WishlistItem
 
-SORT_OPTIONS = {
-    "price_asc": "price",
-    "price_desc": "-price",
-    "category": "category",
-    "brand": "brand",
-    "store": "store",
-}
+User = get_user_model()
 
 
 @login_required
@@ -271,9 +264,6 @@ def friends(request):
     search_results = None
     query = request.GET.get("q", "").strip()
     if query:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        from django.db.models import Q
         search_results = (
             User.objects.filter(
                 Q(username__icontains=query) |
@@ -301,8 +291,6 @@ def friends(request):
 
 @login_required
 def send_friend_request(request, user_id):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
     to_user = get_object_or_404(User, pk=user_id)
 
     if to_user == request.user:
@@ -343,6 +331,15 @@ def deny_friend_request(request, request_id):
 
 
 @login_required
+def remove_friend(request, user_id):
+    friend = get_object_or_404(User, pk=user_id)
+    Friendship.objects.filter(user=request.user, friend=friend).delete()
+    Friendship.objects.filter(user=friend, friend=request.user).delete()
+    messages.success(request, f"{friend.first_name or friend.username} has been removed from your friends.")
+    return redirect("wishlist:friends")
+
+
+@login_required
 def friend_requests_api(request):
     pending = (
         FriendRequest.objects.filter(to_user=request.user, status=FriendRequest.Status.PENDING)
@@ -366,8 +363,6 @@ def friend_requests_api(request):
 
 @login_required
 def public_profile(request, username):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
     profile_user = get_object_or_404(User, username=username)
     is_self = request.user == profile_user
     is_friend = Friendship.objects.filter(user=request.user, friend=profile_user).exists()
@@ -375,22 +370,22 @@ def public_profile(request, username):
         from_user=request.user, to_user=profile_user, status=FriendRequest.Status.PENDING
     ).exists()
 
-    public_wishlists = None
-    public_events = None
-    public_activities = None
+    wishlists = None
+    events = None
+    activities = None
     if is_self or is_friend:
-        public_wishlists = Wishlist.objects.filter(owner=profile_user, is_public=True)
-        public_events = Event.objects.filter(owner=profile_user, is_public=True)
-        public_activities = Activity.objects.filter(owner=profile_user, is_public=True)
+        wishlists = Wishlist.objects.filter(owner=profile_user)
+        events = Event.objects.filter(owner=profile_user)
+        activities = Activity.objects.filter(owner=profile_user)
 
     context = {
         "profile_user": profile_user,
         "is_self": is_self,
         "is_friend": is_friend,
         "has_pending_request": has_pending_request,
-        "public_wishlists": public_wishlists,
-        "public_events": public_events,
-        "public_activities": public_activities,
+        "wishlists": wishlists,
+        "events": events,
+        "activities": activities,
     }
     return render(request, "wishlist/public_profile.html", context)
 
@@ -563,7 +558,6 @@ def inbox(request):
 def conversation_detail(request, convo_id):
     convo = get_object_or_404(Conversation, pk=convo_id)
     if not convo.participants.filter(pk=request.user.pk).exists():
-        from django.http import Http404
         raise Http404
     other = convo.other_participant(request.user)
     # Mark messages as read
@@ -589,8 +583,6 @@ def conversation_detail(request, convo_id):
 
 @login_required
 def start_conversation(request, user_id):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
     other = get_object_or_404(User, pk=user_id)
 
     if not Friendship.objects.filter(user=request.user, friend=other).exists():

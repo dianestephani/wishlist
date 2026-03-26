@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Delete {{ object.title }}{% endblock %}
+{% block title %}Delete {{ object }}{% endblock %}
 
 {% block content %}
 <div class="auth-form">
     <h1>Delete {{ type|title }}</h1>
-    <p>Are you sure you want to delete <strong>{{ object.title }}</strong>? This action cannot be undone.</p>
+    <p>Are you sure you want to delete <strong>{{ object }}</strong>? This action cannot be undone.</p>
 
     <form method="post">
         {% csrf_token %}

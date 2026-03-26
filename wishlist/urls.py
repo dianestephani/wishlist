@@ -29,6 +29,7 @@ urlpatterns = [
     path("profile/delete/", views.delete_account, name="delete_account"),
     # Friends
     path("friends/", views.friends, name="friends"),
+    path("users/<str:username>/", views.public_profile, name="public_profile"),
     # Events
     path("events/", views.events_list, name="events"),
     path("events/<int:event_id>/", views.event_detail, name="event_detail"),

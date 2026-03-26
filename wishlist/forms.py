@@ -157,3 +157,13 @@ class UndoPurchaseForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 3, "placeholder": "Explain yourself (optional)"}),
         label="Message",
     )
+
+
+class MessageForm(forms.Form):
+    subject = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={"placeholder": "Subject"}),
+    )
+    content = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "Write your message..."}),
+    )

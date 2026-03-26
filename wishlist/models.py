@@ -1,11 +1,30 @@
+import random
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+AVATAR_COLORS = [
+    "#5eead4", "#f472b6", "#818cf8", "#fb923c", "#a78bfa",
+    "#34d399", "#f87171", "#60a5fa", "#fbbf24", "#c084fc",
+]
 
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=20, blank=True)
+    avatar_color = models.CharField(max_length=7, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.avatar_color:
+            self.avatar_color = random.choice(AVATAR_COLORS)
+        super().save(*args, **kwargs)
+
+    @property
+    def initials(self):
+        first = self.first_name[0] if self.first_name else "?"
+        last = self.last_name[0] if self.last_name else ""
+        return f"{first}{last}"
 
     def __str__(self):
         return self.email
@@ -244,3 +263,79 @@ class FriendRequest(models.Model):
 
     def __str__(self):
         return f"{self.from_user} → {self.to_user} ({self.status})"
+
+
+class Conversation(models.Model):
+    participants = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name="conversations",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def other_participant(self, user):
+        return self.participants.exclude(pk=user.pk).first()
+
+    def last_message(self):
+        return self.messages.order_by("-created_at").first()
+
+    def __str__(self):
+        names = ", ".join(str(p) for p in self.participants.all()[:2])
+        return f"Conversation: {names}"
+
+
+class Message(models.Model):
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name="messages",
+    )
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="sent_messages",
+    )
+    subject = models.CharField(max_length=255)
+    content = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.sender}: {self.subject}"
+
+
+class Notification(models.Model):
+    class NotifType(models.TextChoices):
+        WISHLIST = "wishlist", "Wishlist"
+        EVENT = "event", "Event"
+        ACTIVITY = "activity", "Activity"
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="sent_notifications",
+        null=True,
+        blank=True,
+    )
+    type = models.CharField(max_length=10, choices=NotifType.choices)
+    subject = models.CharField(max_length=255)
+    content = models.TextField(blank=True)
+    related_object_id = models.IntegerField(null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"[{self.type}] {self.subject}"

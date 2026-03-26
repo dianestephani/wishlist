@@ -52,19 +52,27 @@
                             <div class="notif-header">
                                 <h3>Notifications</h3>
                                 <div class="notif-tabs">
-                                    <button type="button" class="notif-tab active" id="tab-wishlists" onclick="switchNotifTab('wishlists')">Wishlists</button>
+                                    <button type="button" class="notif-tab active" id="tab-messages" onclick="switchNotifTab('messages')">Messages</button>
+                                    <button type="button" class="notif-tab" id="tab-activity" onclick="switchNotifTab('activity')">Activity</button>
                                     <button type="button" class="notif-tab" id="tab-friends" onclick="switchNotifTab('friends')">Friends</button>
                                 </div>
                             </div>
-                            <div id="notif-list-wishlists" class="notif-list">
+                            <div id="notif-list-messages" class="notif-list">
+                                <p class="notif-empty">Loading...</p>
+                            </div>
+                            <div id="notif-list-activity" class="notif-list" style="display: none;">
                                 <p class="notif-empty">Loading...</p>
                             </div>
                             <div id="notif-list-friends" class="notif-list" style="display: none;">
                                 <p class="notif-empty">Loading...</p>
                             </div>
+                            <div class="notif-footer">
+                                <a href="{% url 'wishlist:inbox' %}">View All Messages</a>
+                                <a href="{% url 'wishlist:activity_feed' %}">View All Activity</a>
+                            </div>
                         </div>
                     </div>
-                    <a href="{% url 'wishlist:profile' %}" class="nav-avatar" title="{{ user.username }}">{{ user.first_name|make_list|first|default:"?" }}{{ user.last_name|make_list|first|default:"" }}</a>
+                    <a href="{% url 'wishlist:profile' %}" class="nav-avatar" style="background: {{ user.avatar_color|default:'#5eead4' }}" title="{{ user.username }}">{{ user.initials }}</a>
                     <a href="{% url 'wishlist:logout' %}">Logout</a>
                 {% else %}
                     <a href="{% url 'wishlist:login' %}">Login</a>
@@ -285,37 +293,38 @@
         }
     }
 
-    var notifWishlistsLoaded = false;
-    var notifFriendsLoaded = false;
+    var tabLoaded = {messages: false, activity: false, friends: false};
 
     function toggleNotifications() {
         var panel = document.getElementById("notif-panel");
         if (!panel) return;
         panel.classList.toggle("notif-panel-open");
-        if (!notifWishlistsLoaded) {
-            fetchWishlistNotifications();
-            notifWishlistsLoaded = true;
+        if (!tabLoaded.messages) {
+            fetchMessages();
+            tabLoaded.messages = true;
         }
     }
 
     function switchNotifTab(tab) {
-        document.getElementById("tab-wishlists").classList.toggle("active", tab === "wishlists");
-        document.getElementById("tab-friends").classList.toggle("active", tab === "friends");
-        document.getElementById("notif-list-wishlists").style.display = tab === "wishlists" ? "block" : "none";
-        document.getElementById("notif-list-friends").style.display = tab === "friends" ? "block" : "none";
-        if (tab === "friends" && !notifFriendsLoaded) {
-            fetchFriendRequests();
-            notifFriendsLoaded = true;
+        ["messages", "activity", "friends"].forEach(function(t) {
+            document.getElementById("tab-" + t).classList.toggle("active", t === tab);
+            document.getElementById("notif-list-" + t).style.display = t === tab ? "block" : "none";
+        });
+        if (!tabLoaded[tab]) {
+            if (tab === "messages") fetchMessages();
+            else if (tab === "activity") fetchActivity();
+            else if (tab === "friends") fetchFriendRequests();
+            tabLoaded[tab] = true;
         }
     }
 
-    function fetchWishlistNotifications() {
-        var list = document.getElementById("notif-list-wishlists");
+    function fetchMessages() {
+        var list = document.getElementById("notif-list-messages");
         fetch("{% url 'wishlist:notifications_api' %}")
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!data.notifications.length) {
-                    list.innerHTML = '<p class="notif-empty">No activity yet.</p>';
+                    list.innerHTML = '<p class="notif-empty">No messages yet.</p>';
                     return;
                 }
                 var html = "";
@@ -333,9 +342,35 @@
                 });
                 list.innerHTML = html;
             })
-            .catch(function() {
-                list.innerHTML = '<p class="notif-empty">Failed to load.</p>';
-            });
+            .catch(function() { list.innerHTML = '<p class="notif-empty">Failed to load.</p>'; });
+    }
+
+    function fetchActivity() {
+        var list = document.getElementById("notif-list-activity");
+        fetch("{% url 'wishlist:activity_feed_api' %}")
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.notifications.length) {
+                    list.innerHTML = '<p class="notif-empty">No activity yet.</p>';
+                    return;
+                }
+                var html = "";
+                data.notifications.forEach(function(n) {
+                    var date = new Date(n.created_at);
+                    var time = date.toLocaleDateString("en-US", {month: "short", day: "numeric"}) + ", " + date.toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit"});
+                    html += '<div class="notif-item">';
+                    html += '<div class="notif-fr-avatar" style="background:' + n.sender_color + '">' + n.sender_initials + '</div>';
+                    html += '<div class="notif-item-content">';
+                    html += '<span class="notif-item-action">' + n.sender_name + '</span>';
+                    html += '<span class="notif-item-title">' + n.subject + '</span>';
+                    if (n.content) html += '<span class="notif-item-message">' + n.content + '</span>';
+                    html += '</div>';
+                    html += '<span class="notif-item-time">' + time + '</span>';
+                    html += '</div>';
+                });
+                list.innerHTML = html;
+            })
+            .catch(function() { list.innerHTML = '<p class="notif-empty">Failed to load.</p>'; });
     }
 
     function fetchFriendRequests() {
@@ -366,9 +401,7 @@
                 });
                 list.innerHTML = html;
             })
-            .catch(function() {
-                list.innerHTML = '<p class="notif-empty">Failed to load.</p>';
-            });
+            .catch(function() { list.innerHTML = '<p class="notif-empty">Failed to load.</p>'; });
     }
 
     document.addEventListener("click", function(e) {

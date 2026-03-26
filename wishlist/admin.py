@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Activity, Event, FriendRequest, Friendship, ItemEvent, ItemView, Purchase, StoreClick, User, Wishlist, WishlistItem
+from .models import Activity, Conversation, Event, FriendRequest, Friendship, ItemEvent, ItemView, Message, Notification, Purchase, StoreClick, User, Wishlist, WishlistItem
 
 
 @admin.register(User)
@@ -122,4 +122,32 @@ class FriendRequestAdmin(admin.ModelAdmin):
     list_display = ("from_user", "to_user", "status", "created_at")
     list_filter = ("status",)
     search_fields = ("from_user__username", "to_user__username")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(Conversation)
+class ConversationAdmin(admin.ModelAdmin):
+    list_display = ("pk", "created_at")
+    readonly_fields = ("created_at",)
+
+
+class MessageInline(admin.TabularInline):
+    model = Message
+    extra = 0
+    readonly_fields = ("sender", "subject", "content", "is_read", "created_at")
+
+
+@admin.register(Message)
+class MessageAdmin(admin.ModelAdmin):
+    list_display = ("sender", "subject", "conversation", "is_read", "created_at")
+    list_filter = ("is_read",)
+    search_fields = ("subject", "content")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("recipient", "sender", "type", "subject", "is_read", "created_at")
+    list_filter = ("type", "is_read")
+    search_fields = ("subject", "content")
     readonly_fields = ("created_at",)

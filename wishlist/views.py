@@ -4,10 +4,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import ActivityForm, EventForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
+from django.db.models import Max, Q
 from django.http import JsonResponse
 
-from .models import Activity, Event, FriendRequest, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
+from .forms import ActivityForm, EventForm, MessageForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
+from .messaging import get_or_create_conversation, send_message_and_notify
+from .models import Activity, Conversation, Event, FriendRequest, Friendship, ItemEvent, ItemView, Message, Notification, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
     "price_asc": "price",
@@ -477,6 +479,16 @@ def mark_purchased(request, item_id):
             )
             item.status = WishlistItem.Status.PURCHASED
             item.save()
+            # Notify item owner + create message thread
+            if request.user != item.user:
+                wl_name = item.wishlist.name if item.wishlist else "a wishlist"
+                subject = f'"{item.title}" was purchased from {wl_name}!'
+                content = message if message else f'{request.user.first_name or request.user.username} purchased "{item.title}" for you.'
+                send_message_and_notify(
+                    sender=request.user, recipient=item.user,
+                    subject=subject, content=content,
+                    notif_type=Notification.NotifType.WISHLIST, related_id=item.pk,
+                )
             messages.success(request, f'"{item.title}" has been marked as purchased. Thank you!')
             return redirect("wishlist:index")
     else:
@@ -505,12 +517,137 @@ def undo_purchase(request, item_id):
             )
             item.status = WishlistItem.Status.AVAILABLE
             item.save()
+            # Notify item owner
+            if request.user != item.user:
+                subject = f'"{item.title}" is no longer marked as purchased'
+                content = message if message else f'{request.user.first_name or request.user.username} undid their purchase of "{item.title}".'
+                send_message_and_notify(
+                    sender=request.user, recipient=item.user,
+                    subject=subject, content=content,
+                    notif_type=Notification.NotifType.WISHLIST, related_id=item.pk,
+                )
             messages.info(request, f'"{item.title}" has been reverted to available.')
             return redirect("wishlist:index")
     else:
         form = UndoPurchaseForm()
 
     return render(request, "wishlist/undo_purchase.html", {"form": form, "item": item})
+
+
+@login_required
+def inbox(request):
+    conversations = (
+        Conversation.objects.filter(participants=request.user)
+        .annotate(last_msg_time=Max("messages__created_at"))
+        .order_by("-last_msg_time")
+    )
+    convo_data = []
+    for convo in conversations:
+        other = convo.other_participant(request.user)
+        last = convo.last_message()
+        unread = convo.messages.filter(is_read=False).exclude(sender=request.user).count()
+        convo_data.append({
+            "convo": convo,
+            "other": other,
+            "last_message": last,
+            "unread": unread,
+        })
+    return render(request, "wishlist/inbox.html", {"conversations": convo_data})
+
+
+@login_required
+def conversation_detail(request, convo_id):
+    convo = get_object_or_404(Conversation, pk=convo_id)
+    if not convo.participants.filter(pk=request.user.pk).exists():
+        from django.http import Http404
+        raise Http404
+    other = convo.other_participant(request.user)
+    # Mark messages as read
+    convo.messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
+
+    if request.method == "POST":
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            Message.objects.create(
+                conversation=convo,
+                sender=request.user,
+                subject=form.cleaned_data["subject"],
+                content=form.cleaned_data["content"],
+            )
+            return redirect("wishlist:conversation_detail", convo_id=convo.pk)
+    else:
+        form = MessageForm()
+
+    msgs = convo.messages.select_related("sender").all()
+    context = {"convo": convo, "other": other, "messages_list": msgs, "form": form}
+    return render(request, "wishlist/conversation.html", context)
+
+
+@login_required
+def start_conversation(request, user_id):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    other = get_object_or_404(User, pk=user_id)
+
+    if not Friendship.objects.filter(user=request.user, friend=other).exists():
+        messages.error(request, "You can only message friends.")
+        return redirect("wishlist:friends")
+
+    convo = get_or_create_conversation(request.user, other)
+
+    if request.method == "POST":
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            Message.objects.create(
+                conversation=convo,
+                sender=request.user,
+                subject=form.cleaned_data["subject"],
+                content=form.cleaned_data["content"],
+            )
+            return redirect("wishlist:conversation_detail", convo_id=convo.pk)
+    else:
+        subject = request.GET.get("subject", "")
+        content = request.GET.get("content", "")
+        form = MessageForm(initial={"subject": subject, "content": content})
+
+    return render(request, "wishlist/start_conversation.html", {"form": form, "other": other, "convo": convo})
+
+
+@login_required
+def activity_feed(request):
+    notifications = Notification.objects.filter(recipient=request.user).select_related("sender")[:50]
+    return render(request, "wishlist/activity_feed.html", {"notifications": notifications})
+
+
+@login_required
+def activity_feed_api(request):
+    notifs = Notification.objects.filter(recipient=request.user).select_related("sender")[:20]
+    data = []
+    for n in notifs:
+        sender = n.sender
+        data.append({
+            "id": n.pk,
+            "type": n.type,
+            "subject": n.subject,
+            "content": n.content[:100] if n.content else "",
+            "sender_name": f"{sender.first_name} {sender.last_name}".strip() if sender else "System",
+            "sender_username": sender.username if sender else "",
+            "sender_initials": sender.initials if sender else "?",
+            "sender_color": sender.avatar_color if sender else "#5eead4",
+            "is_read": n.is_read,
+            "created_at": n.created_at.isoformat(),
+            "related_id": n.related_object_id,
+            "sender_id": sender.pk if sender else None,
+        })
+    return JsonResponse({"notifications": data})
+
+
+@login_required
+def messages_api(request):
+    unread = Message.objects.filter(
+        conversation__participants=request.user, is_read=False
+    ).exclude(sender=request.user).count()
+    return JsonResponse({"unread_messages": unread})
 
 
 def register_view(request):

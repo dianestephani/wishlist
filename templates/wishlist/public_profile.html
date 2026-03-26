@@ -19,6 +19,9 @@
 
     {% if is_friend %}
         <p class="friend-badge-inline">You are friends</p>
+        <div class="detail-actions">
+            <a href="{% url 'wishlist:start_conversation' profile_user.id %}" class="btn-edit">Message</a>
+        </div>
     {% elif not is_self %}
         {% if has_pending_request %}
             <p class="friend-badge-inline pending">Friend request pending</p>

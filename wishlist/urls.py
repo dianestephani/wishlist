@@ -27,8 +27,15 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("profile/edit/", views.edit_profile, name="edit_profile"),
     path("profile/delete/", views.delete_account, name="delete_account"),
-    # Notifications
+    # Messaging
+    path("inbox/", views.inbox, name="inbox"),
+    path("conversation/<int:convo_id>/", views.conversation_detail, name="conversation_detail"),
+    path("message/<int:user_id>/", views.start_conversation, name="start_conversation"),
+    path("activity/", views.activity_feed, name="activity_feed"),
+    # APIs
     path("api/notifications/", views.notifications_api, name="notifications_api"),
+    path("api/activity/", views.activity_feed_api, name="activity_feed_api"),
+    path("api/messages/", views.messages_api, name="messages_api"),
     # Friends
     path("friends/", views.friends, name="friends"),
     path("friends/add/<int:user_id>/", views.send_friend_request, name="send_friend_request"),

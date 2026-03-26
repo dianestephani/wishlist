@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Conversation with {{ other.first_name }} - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:inbox' %}" class="back-link">&larr; Back to Inbox</a>
+    <h1 class="page-title">{{ other.first_name }} {{ other.last_name }}</h1>
+</div>
+
+<div class="thread">
+    {% for msg in messages_list %}
+        <div class="thread-msg {% if msg.sender == user %}thread-sent{% else %}thread-received{% endif %}">
+            {% if msg.sender != user %}
+                <div class="thread-avatar" style="background: {{ msg.sender.avatar_color|default:'#5eead4' }}">{{ msg.sender.initials }}</div>
+            {% endif %}
+            <div class="thread-bubble">
+                <div class="thread-meta">
+                    <span class="thread-sender">{{ msg.sender.first_name }} {{ msg.sender.last_name }}</span>
+                    <span class="thread-time">{{ msg.created_at|timesince }} ago</span>
+                </div>
+                <p class="thread-subject">{{ msg.subject }}</p>
+                <p class="thread-content">{{ msg.content }}</p>
+            </div>
+            {% if msg.sender == user %}
+                <div class="thread-avatar" style="background: {{ msg.sender.avatar_color|default:'#5eead4' }}">{{ msg.sender.initials }}</div>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p class="empty-state">No messages yet. Start the conversation below.</p>
+    {% endfor %}
+</div>
+
+<div class="thread-reply">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_subject">Subject</label>
+            {{ form.subject }}
+        </div>
+        <div class="form-group">
+            <label for="id_content">Message</label>
+            {{ form.content }}
+        </div>
+        <button type="submit" class="btn-modal-submit">Send</button>
+    </form>
+</div>
+{% endblock %}

@@ -331,6 +331,15 @@ def deny_friend_request(request, request_id):
 
 
 @login_required
+def remove_friend(request, user_id):
+    friend = get_object_or_404(User, pk=user_id)
+    Friendship.objects.filter(user=request.user, friend=friend).delete()
+    Friendship.objects.filter(user=friend, friend=request.user).delete()
+    messages.success(request, f"{friend.first_name or friend.username} has been removed from your friends.")
+    return redirect("wishlist:friends")
+
+
+@login_required
 def friend_requests_api(request):
     pending = (
         FriendRequest.objects.filter(to_user=request.user, status=FriendRequest.Status.PENDING)

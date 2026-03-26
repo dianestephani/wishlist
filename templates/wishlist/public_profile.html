@@ -21,6 +21,7 @@
         <p class="friend-badge-inline">You are friends</p>
         <div class="detail-actions">
             <a href="{% url 'wishlist:start_conversation' profile_user.id %}" class="btn-edit">Message</a>
+            <a href="{% url 'wishlist:remove_friend' profile_user.id %}" class="btn-delete">Remove Friend</a>
         </div>
     {% elif not is_self %}
         {% if has_pending_request %}

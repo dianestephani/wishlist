@@ -2450,6 +2450,47 @@ class DenyFriendRequestTests(TestCase):
 
 
 # ---------------------------------------------------------------------------
+# Remove friend tests
+# ---------------------------------------------------------------------------
+class RemoveFriendTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.friend = User.objects.create_user(
+            username="buddy", email="buddy@example.com", password="pass123",
+            first_name="Jane",
+        )
+        Friendship.objects.create(user=self.user, friend=self.friend)
+        Friendship.objects.create(user=self.friend, friend=self.user)
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:remove_friend", args=[self.friend.pk])
+
+    def test_removes_both_directions(self):
+        self.client.get(self.url)
+        self.assertFalse(Friendship.objects.filter(user=self.user, friend=self.friend).exists())
+        self.assertFalse(Friendship.objects.filter(user=self.friend, friend=self.user).exists())
+
+    def test_redirects_to_friends(self):
+        response = self.client.get(self.url)
+        self.assertRedirects(response, reverse("wishlist:friends"))
+
+    def test_shows_success_message(self):
+        response = self.client.get(self.url, follow=True)
+        self.assertContains(response, "removed")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_nonexistent_user_returns_404(self):
+        url = reverse("wishlist:remove_friend", args=[99999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
 # Friend requests API tests
 # ---------------------------------------------------------------------------
 class FriendRequestsApiTests(TestCase):

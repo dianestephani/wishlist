@@ -57,11 +57,17 @@ The app will be available at `http://127.0.0.1:8000/`. The admin panel is at `ht
 
 | Variable | Required | Description |
 | --- | --- | --- |
+| `DATABASE_URL` | Production | Postgres connection string (falls back to SQLite locally) |
+| `DJANGO_SECRET_KEY` | Production | Secret key for cryptographic signing |
+| `DEBUG` | No | `True`/`False` (defaults to `True`) |
+| `ALLOWED_HOSTS` | Production | Comma-separated hostnames |
 | `RESEND_API_KEY` | For emails | Your Resend API key |
 | `RESEND_FROM_EMAIL` | For emails | Sender address (must be verified in Resend) |
 | `NOTIFICATION_TO_EMAIL` | For emails | Recipient address for purchase/undo notifications |
+| `SUPABASE_S3_ACCESS_KEY` | For images | Supabase Storage S3 access key ID |
+| `SUPABASE_S3_SECRET_KEY` | For images | Supabase Storage S3 secret access key |
 
-If any email variable is missing, the app works normally — emails are silently skipped.
+If email or storage variables are missing, the app works normally — emails are silently skipped and images use local filesystem storage.
 
 See `.env.example` for a template.
 
@@ -74,10 +80,11 @@ See `.env.example` for a template.
 - **Mark as purchased** — Confirm purchase with a required checkbox disclaimer and optional message
 - **Undo purchase** — "Just kidding!" button reverts a purchased item back to available
 - **Email notifications** — Sends an email via Resend API when an item is purchased or undone, including the user's name, contact info, and optional message
-- **Item detail page** — View full item info with a tracked "Visit Store" link
+- **Item detail page** — View full item info, notes, tracked "Visit Store" link, and purchase/undo buttons
 - **Admin activity logs** — Superusers see per-item activity logs (purchase/undo events), page view counts per user, and store click logs with timestamps in Pacific Time
 - **Store click tracking** — Every "Visit Store" click is logged with user and timestamp
 - **OG meta tags** — Open Graph and Twitter Card tags for link previews, with per-item overrides on detail pages
+- **Supabase Storage** — Product images stored in Supabase S3-compatible storage for persistent cloud hosting
 - **Dark theme** — Disco ball background, dark glassmorphism UI with pink/purple accents, Poppins font
 
 ## Project Structure
@@ -123,13 +130,14 @@ wishlist/
 
 ## Configuration
 
-- **Database:** SQLite (default for development)
+- **Database:** Postgres via Supabase in production, SQLite for local development
 - **Static files:** Served from `static/`, collected to `staticfiles/`
 - **Media files:** Uploaded images served from `media/` in development
 - **Templates:** Project-level templates in `templates/`, app-level templates in `templates/wishlist/`
 - **Auth:** Custom user model (`wishlist.User`), login required for wishlist pages
 - **Timezone:** `America/Los_Angeles` (Pacific Time) for admin log timestamps
 - **Email:** Resend API, configured via environment variables
+- **Image storage:** Supabase Storage (S3-compatible), falls back to local filesystem
 
 ## URL Routes
 
@@ -193,7 +201,7 @@ Tests are in `wishlist/tests.py` and cover:
 | **Forms** | RegistrationForm validation (required fields, duplicate email, password mismatch), PurchaseForm confirm checkbox, UndoPurchaseForm optional message |
 | **Auth views** | Register (success, auto-login, errors, redirect if authenticated), Login (success, failure, redirect), Logout (redirect, session cleared) |
 | **Index view** | Login required, displays user items only, empty state, all sort options, purchased badge/styling, purchase/undo buttons |
-| **Item detail view** | Login required, displays info, OG meta tags with price/store, view counter increments, superuser sees activity log/view stats/store click log, regular users see none of these, 404 |
+| **Item detail view** | Login required, displays info, OG meta tags with price/store, purchase/undo buttons per status, view counter increments, superuser sees activity log/view stats/store click log, regular users see none of these, 404 |
 | **Purchase view** | Login required, form display, successful purchase + event creation, email sent on success, email not sent on failure, missing confirm rejected, already-purchased redirect, 404, optional message |
 | **Undo view** | Login required, form display, successful undo + event creation, email sent on success, email not sent when item is available, without message, available-item redirect, 404 |
 | **Visit store view** | Login required, redirects to product URL, creates click record, multiple clicks logged, no-URL fallback, 404 |

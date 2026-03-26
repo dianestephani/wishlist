@@ -3,8 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import PurchaseForm, RegistrationForm
-from .models import Purchase, WishlistItem
+from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
+from .models import ItemEvent, ItemView, Purchase, StoreClick, WishlistItem
 
 SORT_OPTIONS = {
     "price_asc": "price",
@@ -38,6 +38,42 @@ def index(request):
 
 
 @login_required
+def item_detail(request, item_id):
+    item = get_object_or_404(WishlistItem, pk=item_id)
+
+    view_record, _ = ItemView.objects.get_or_create(item=item, user=request.user)
+    view_record.count += 1
+    view_record.save()
+
+    events = None
+    view_stats = None
+    store_click_stats = None
+    if request.user.is_superuser:
+        events = item.events.select_related("user").all()
+        view_stats = item.views.select_related("user").order_by("-count")
+        store_click_stats = item.store_clicks.select_related("user").all()
+
+    context = {
+        "item": item,
+        "events": events,
+        "view_stats": view_stats,
+        "store_click_stats": store_click_stats,
+    }
+    return render(request, "wishlist/item_detail.html", context)
+
+
+@login_required
+def visit_store(request, item_id):
+    item = get_object_or_404(WishlistItem, pk=item_id)
+
+    if not item.product_url:
+        return redirect("wishlist:item_detail", item_id=item.pk)
+
+    StoreClick.objects.create(item=item, user=request.user)
+    return redirect(item.product_url)
+
+
+@login_required
 def mark_purchased(request, item_id):
     item = get_object_or_404(WishlistItem, pk=item_id)
 
@@ -47,10 +83,17 @@ def mark_purchased(request, item_id):
     if request.method == "POST":
         form = PurchaseForm(request.POST)
         if form.is_valid():
+            message = form.cleaned_data["message"]
             Purchase.objects.create(
                 item=item,
                 purchased_by=request.user,
-                message=form.cleaned_data["message"],
+                message=message,
+            )
+            ItemEvent.objects.create(
+                item=item,
+                event_type=ItemEvent.EventType.PURCHASED,
+                user=request.user,
+                message=message,
             )
             item.status = WishlistItem.Status.PURCHASED
             item.save()
@@ -59,6 +102,33 @@ def mark_purchased(request, item_id):
         form = PurchaseForm()
 
     return render(request, "wishlist/purchase.html", {"form": form, "item": item})
+
+
+@login_required
+def undo_purchase(request, item_id):
+    item = get_object_or_404(WishlistItem, pk=item_id)
+
+    if item.status != WishlistItem.Status.PURCHASED:
+        return redirect("wishlist:index")
+
+    if request.method == "POST":
+        form = UndoPurchaseForm(request.POST)
+        if form.is_valid():
+            message = form.cleaned_data["message"]
+            Purchase.objects.filter(item=item).delete()
+            ItemEvent.objects.create(
+                item=item,
+                event_type=ItemEvent.EventType.UNDONE,
+                user=request.user,
+                message=message,
+            )
+            item.status = WishlistItem.Status.AVAILABLE
+            item.save()
+            return redirect("wishlist:index")
+    else:
+        form = UndoPurchaseForm()
+
+    return render(request, "wishlist/undo_purchase.html", {"form": form, "item": item})
 
 
 def register_view(request):

@@ -34,6 +34,10 @@
                 {% endif %}
             </div>
 
+            {% if item.notes %}
+                <p class="item-notes-inline">{{ item.notes|linebreaksbr }}</p>
+            {% endif %}
+
             {% if item.product_url %}
                 <a href="{% url 'wishlist:visit_store' item.id %}" target="_blank" rel="noopener noreferrer" class="card-link">
                     Visit Store

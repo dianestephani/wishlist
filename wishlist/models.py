@@ -28,6 +28,7 @@ class WishlistItem(models.Model):
     brand = models.CharField(max_length=100, blank=True)
     store = models.CharField(max_length=100, blank=True)
     image = models.ImageField(upload_to="wishlist_images/", blank=True)
+    notes = models.TextField(blank=True)
     status = models.CharField(
         max_length=10,
         choices=Status.choices,

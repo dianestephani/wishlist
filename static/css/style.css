@@ -647,6 +647,13 @@ footer {
     color: rgba(255, 255, 255, 0.4);
 }
 
+.item-notes-inline {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    font-style: normal;
+    line-height: 1.5;
+}
+
 /* ===== Event log / admin tables ===== */
 .event-log {
     margin-top: 1.25rem;

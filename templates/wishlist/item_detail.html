@@ -47,6 +47,16 @@
             <p class="item-status item-status-{{ item.status }}">
                 Status: {{ item.get_status_display }}
             </p>
+
+            {% if item.status == "available" %}
+                <a href="{% url 'wishlist:mark_purchased' item.id %}" class="btn-purchased">
+                    I've purchased this!
+                </a>
+            {% elif item.status == "purchased" %}
+                <a href="{% url 'wishlist:undo_purchase' item.id %}" class="btn-undo">
+                    Just kidding!
+                </a>
+            {% endif %}
         </div>
     </div>
 

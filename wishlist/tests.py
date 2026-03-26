@@ -664,6 +664,27 @@ class ItemDetailViewTests(TestCase):
         self.assertContains(response, "Tech")
         self.assertContains(response, "Visit Store")
 
+    def test_available_item_shows_purchase_button(self):
+        self.client.login(username="owner", password="pass123")
+        response = self.client.get(self.url)
+        self.assertContains(response, "purchased this!")
+        self.assertContains(response, reverse("wishlist:mark_purchased", args=[self.item.pk]))
+
+    def test_purchased_item_shows_undo_button(self):
+        self.item.status = WishlistItem.Status.PURCHASED
+        self.item.save()
+        self.client.login(username="owner", password="pass123")
+        response = self.client.get(self.url)
+        self.assertContains(response, "Just kidding!")
+        self.assertContains(response, reverse("wishlist:undo_purchase", args=[self.item.pk]))
+
+    def test_purchased_item_does_not_show_purchase_button(self):
+        self.item.status = WishlistItem.Status.PURCHASED
+        self.item.save()
+        self.client.login(username="owner", password="pass123")
+        response = self.client.get(self.url)
+        self.assertNotContains(response, reverse("wishlist:mark_purchased", args=[self.item.pk]))
+
     def test_og_meta_tags_present(self):
         self.client.login(username="owner", password="pass123")
         response = self.client.get(self.url)

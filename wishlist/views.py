@@ -36,11 +36,15 @@ def create_wishlist(request):
     if request.method == "POST":
         form = WishlistForm(request.POST)
         item_form = WishlistItemForm(request.POST, request.FILES, prefix="item")
-        if form.is_valid() and item_form.is_valid():
+        has_item_data = any(
+            request.POST.get(f"item-{f}") for f in ["title", "product_url", "price", "category", "brand", "store"]
+        )
+        item_valid = item_form.is_valid() if has_item_data else True
+        if form.is_valid() and item_valid:
             wl = form.save(commit=False)
             wl.user = request.user
             wl.save()
-            if item_form.cleaned_data.get("title"):
+            if has_item_data and item_form.cleaned_data.get("title"):
                 item = item_form.save(commit=False)
                 item.user = request.user
                 item.save()

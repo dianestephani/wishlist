@@ -722,6 +722,7 @@ strong {
     display: flex;
     gap: 0.75rem;
     margin-top: 0.75rem;
+    justify-content: center;
 }
 
 .btn-edit {
@@ -1375,6 +1376,7 @@ strong {
     box-shadow: var(--glass-shadow);
     padding: 2rem;
     max-width: 600px;
+    margin: 0 auto;
 }
 
 .profile-header {

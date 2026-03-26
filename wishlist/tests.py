@@ -5,7 +5,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
-from .models import ItemEvent, ItemView, Purchase, WishlistItem
+from .models import ItemEvent, ItemView, Purchase, StoreClick, WishlistItem
 
 User = get_user_model()
 
@@ -189,6 +189,42 @@ class ItemViewModelTests(TestCase):
         ItemView.objects.create(item=self.item, user=self.viewer, count=1)
         self.item.delete()
         self.assertEqual(ItemView.objects.count(), 0)
+
+
+class StoreClickModelTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="owner", email="owner@example.com", password="pass123"
+        )
+        self.clicker = User.objects.create_user(
+            username="clicker", email="clicker@example.com", password="pass123"
+        )
+        self.item = WishlistItem.objects.create(
+            user=self.owner, title="Clickable", product_url="https://example.com"
+        )
+
+    def test_create_store_click(self):
+        click = StoreClick.objects.create(item=self.item, user=self.clicker)
+        self.assertIn("Clickable", str(click))
+        self.assertIn("clicker@example.com", str(click))
+
+    def test_multiple_clicks_create_multiple_records(self):
+        StoreClick.objects.create(item=self.item, user=self.clicker)
+        StoreClick.objects.create(item=self.item, user=self.clicker)
+        StoreClick.objects.create(item=self.item, user=self.owner)
+        self.assertEqual(StoreClick.objects.filter(item=self.item).count(), 3)
+
+    def test_ordered_newest_first(self):
+        c1 = StoreClick.objects.create(item=self.item, user=self.clicker)
+        c2 = StoreClick.objects.create(item=self.item, user=self.clicker)
+        clicks = list(StoreClick.objects.all())
+        self.assertEqual(clicks[0], c2)
+        self.assertEqual(clicks[1], c1)
+
+    def test_cascade_delete_with_item(self):
+        StoreClick.objects.create(item=self.item, user=self.clicker)
+        self.item.delete()
+        self.assertEqual(StoreClick.objects.count(), 0)
 
 
 # ---------------------------------------------------------------------------
@@ -684,8 +720,76 @@ class ItemDetailViewTests(TestCase):
         self.assertContains(response, "View Count")
         self.assertContains(response, "owner")
 
+    def test_regular_user_cannot_see_store_click_log(self):
+        regular = User.objects.create_user(
+            username="regular", email="regular@example.com", password="pass123"
+        )
+        StoreClick.objects.create(item=self.item, user=regular)
+        self.client.login(username="regular", password="pass123")
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Store Click Log")
+
+    def test_superuser_can_see_store_click_log(self):
+        admin = User.objects.create_superuser(
+            username="admin", email="admin@example.com", password="pass123"
+        )
+        StoreClick.objects.create(item=self.item, user=self.owner)
+        self.client.login(username="admin", password="pass123")
+        response = self.client.get(self.url)
+        self.assertContains(response, "Store Click Log")
+        self.assertContains(response, "owner")
+
     def test_nonexistent_item_returns_404(self):
         self.client.login(username="owner", password="pass123")
         url = reverse("wishlist:item_detail", args=[99999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# Visit store view tests
+# ---------------------------------------------------------------------------
+class VisitStoreViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.item = WishlistItem.objects.create(
+            user=self.user,
+            title="Store Item",
+            product_url="https://example.com/product",
+        )
+        self.url = reverse("wishlist:visit_store", args=[self.item.pk])
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_redirects_to_product_url(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "https://example.com/product")
+
+    def test_creates_store_click_record(self):
+        self.client.get(self.url)
+        self.assertEqual(StoreClick.objects.filter(item=self.item, user=self.user).count(), 1)
+
+    def test_multiple_clicks_create_multiple_records(self):
+        self.client.get(self.url)
+        self.client.get(self.url)
+        self.client.get(self.url)
+        self.assertEqual(StoreClick.objects.filter(item=self.item, user=self.user).count(), 3)
+
+    def test_no_product_url_redirects_to_detail(self):
+        item_no_url = WishlistItem.objects.create(user=self.user, title="No URL")
+        url = reverse("wishlist:visit_store", args=[item_no_url.pk])
+        response = self.client.get(url)
+        self.assertRedirects(response, reverse("wishlist:item_detail", args=[item_no_url.pk]))
+        self.assertEqual(StoreClick.objects.count(), 0)
+
+    def test_nonexistent_item_returns_404(self):
+        url = reverse("wishlist:visit_store", args=[99999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

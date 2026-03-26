@@ -5,7 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .email import send_purchased_email, send_undo_email
-from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
+from .forms import EventForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm
 from .models import Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
@@ -29,6 +29,59 @@ def dashboard(request):
         "recent_purchases": recent_purchases,
     }
     return render(request, "wishlist/dashboard.html", context)
+
+
+@login_required
+def create_wishlist(request):
+    if request.method == "POST":
+        form = WishlistForm(request.POST)
+        if form.is_valid():
+            wl = form.save(commit=False)
+            wl.user = request.user
+            wl.save()
+            messages.success(request, f'Wishlist "{wl.title}" created!')
+            return redirect("wishlist:wishlist_detail", wishlist_id=wl.pk)
+    else:
+        form = WishlistForm()
+    return render(request, "wishlist/create_wishlist.html", {"form": form})
+
+
+@login_required
+def create_event(request):
+    if request.method == "POST":
+        form = EventForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.user = request.user
+            event.save()
+            messages.success(request, f'Event "{event.title}" created!')
+            return redirect("wishlist:event_detail", event_id=event.pk)
+    else:
+        form = EventForm()
+    return render(request, "wishlist/create_event.html", {"form": form})
+
+
+@login_required
+def create_activity(request):
+    """Log a manual activity/purchase note."""
+    items = WishlistItem.objects.filter(user=request.user, status=WishlistItem.Status.AVAILABLE)
+    if request.method == "POST":
+        item_id = request.POST.get("item")
+        message = request.POST.get("message", "")
+        item = get_object_or_404(WishlistItem, pk=item_id)
+        Purchase.objects.create(item=item, purchased_by=request.user, message=message)
+        ItemEvent.objects.create(
+            item=item,
+            event_type=ItemEvent.EventType.PURCHASED,
+            user=request.user,
+            message=message,
+        )
+        item.status = WishlistItem.Status.PURCHASED
+        item.save()
+        send_purchased_email(request.user, item, message)
+        messages.success(request, f'"{item.title}" has been marked as purchased!')
+        return redirect("wishlist:dashboard")
+    return render(request, "wishlist/create_activity.html", {"items": items})
 
 
 @login_required

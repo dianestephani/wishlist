@@ -6,6 +6,9 @@ app_name = "wishlist"
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
+    path("create/wishlist/", views.create_wishlist, name="create_wishlist"),
+    path("create/event/", views.create_event, name="create_event"),
+    path("create/activity/", views.create_activity, name="create_activity"),
     path("wishlist/", views.index, name="index"),
     path("wishlist/<int:wishlist_id>/", views.wishlist_detail, name="wishlist_detail"),
     path("events/", views.events_list, name="events"),

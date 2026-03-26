@@ -30,6 +30,28 @@ class RegistrationForm(UserCreationForm):
         return email
 
 
+class WishlistForm(forms.ModelForm):
+    class Meta:
+        from .models import Wishlist
+        model = Wishlist
+        fields = ["title", "description"]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3, "placeholder": "Description (optional)"}),
+        }
+
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        from .models import Event
+        model = Event
+        fields = ["title", "description", "date", "location"]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3, "placeholder": "Description (optional)"}),
+            "date": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "location": forms.TextInput(attrs={"placeholder": "Location (optional)"}),
+        }
+
+
 class PurchaseForm(forms.Form):
     confirm = forms.BooleanField(
         required=True,

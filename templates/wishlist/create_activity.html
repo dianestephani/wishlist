@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Log Activity{% endblock %}
+
+{% block content %}
+<div class="auth-form">
+    <h1>Log Activity</h1>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="item">Item</label>
+            <select name="item" id="item" required>
+                <option value="">Select an item...</option>
+                {% for item in items %}
+                    <option value="{{ item.id }}">{{ item.title }}</option>
+                {% endfor %}
+            </select>
+            {% if not items %}
+                <p class="form-help">No available items to mark as purchased.</p>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="message">Message</label>
+            <textarea name="message" id="message" rows="3" placeholder="Leave a message (optional)"></textarea>
+        </div>
+
+        <button type="submit" {% if not items %}disabled{% endif %}>Log Purchase</button>
+    </form>
+
+    <p class="auth-link"><a href="{% url 'wishlist:dashboard' %}">Back to Dashboard</a></p>
+</div>
+{% endblock %}

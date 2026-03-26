@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block title %}{{ item.title }} - Wishlist{% endblock %}
+{% block og_title %}{{ item.title }}{% endblock %}
+{% block og_description %}{{ item.title }}{% if item.price %} — ${{ item.price }}{% endif %}{% if item.store %} at {{ item.store }}{% endif %}{% endblock %}
+{% block og_image %}{% if item.image %}{{ item.image.url }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="item-detail">
+    <a href="{% url 'wishlist:index' %}" class="back-link">&larr; Back to Wishlist</a>
+
+    <div class="item-detail-header">
+        {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.title }}" class="item-detail-image">
+        {% endif %}
+
+        <div class="item-detail-info">
+            <h1>{{ item.title }}</h1>
+
+            {% if item.price is not None %}
+                <p class="card-price">${{ item.price }}</p>
+            {% endif %}
+
+            <div class="card-details">
+                {% if item.category %}
+                    <span class="card-tag">{{ item.category }}</span>
+                {% endif %}
+                {% if item.brand %}
+                    <span class="card-tag">{{ item.brand }}</span>
+                {% endif %}
+                {% if item.store %}
+                    <span class="card-tag">{{ item.store }}</span>
+                {% endif %}
+            </div>
+
+            {% if item.notes %}
+                <p class="item-notes-inline">{{ item.notes|linebreaksbr }}</p>
+            {% endif %}
+
+            {% if item.product_url %}
+                <a href="{% url 'wishlist:visit_store' item.id %}" target="_blank" rel="noopener noreferrer" class="card-link">
+                    Visit Store
+                </a>
+            {% endif %}
+
+            <p class="item-status item-status-{{ item.status }}">
+                Status: {{ item.get_status_display }}
+            </p>
+        </div>
+    </div>
+
+    {% if view_stats is not None %}
+        <div class="event-log">
+            <h2>View Count</h2>
+
+            {% if view_stats %}
+                <table class="event-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Views</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for view in view_stats %}
+                            <tr>
+                                <td>{{ view.user.username }}</td>
+                                <td>{{ view.count }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-state">No views yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if store_click_stats is not None %}
+        <div class="event-log">
+            <h2>Store Click Log</h2>
+
+            {% if store_click_stats %}
+                <table class="event-table">
+                    <thead>
+                        <tr>
+                            <th>Date &amp; Time (PT)</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% timezone "America/Los_Angeles" %}
+                        {% for click in store_click_stats %}
+                            <tr>
+                                <td>{{ click.created_at|date:"M d, Y g:i A T" }}</td>
+                                <td>{{ click.user.username }}</td>
+                            </tr>
+                        {% endfor %}
+                        {% endtimezone %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-state">No store clicks yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if events is not None %}
+        <div class="event-log">
+            <h2>Activity Log</h2>
+
+            {% if events %}
+                <table class="event-table">
+                    <thead>
+                        <tr>
+                            <th>Date &amp; Time (PT)</th>
+                            <th>Event</th>
+                            <th>User</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% timezone "America/Los_Angeles" %}
+                        {% for event in events %}
+                            <tr class="event-row-{{ event.event_type }}">
+                                <td>{{ event.created_at|date:"M d, Y g:i A T" }}</td>
+                                <td>{{ event.get_event_type_display }}</td>
+                                <td>{{ event.user.username }}</td>
+                                <td>{{ event.message|default:"—" }}</td>
+                            </tr>
+                        {% endfor %}
+                        {% endtimezone %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-state">No activity yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -69,7 +69,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+TIME_ZONE = "America/Los_Angeles"
 USE_I18N = True
 USE_TZ = True
 
@@ -77,6 +77,20 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "wishlist.User"
+
+LOGIN_URL = "wishlist:login"
+LOGIN_REDIRECT_URL = "wishlist:index"
+LOGOUT_REDIRECT_URL = "wishlist:login"
+
+# Resend email configuration
+import os
+
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "wishlist@example.com")
+NOTIFICATION_TO_EMAIL = os.environ.get("NOTIFICATION_TO_EMAIL", "")

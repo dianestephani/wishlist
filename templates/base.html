@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Wishlist{% endblock %}</title>
+    <meta property="og:title" content="{% block og_title %}Wishlist{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}A wishlist app for tracking gifts and things you want.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'images/nintendo-switch-2.jpg' %}{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">

@@ -2,6 +2,9 @@
 {% load tz %}
 
 {% block title %}{{ item.title }} - Wishlist{% endblock %}
+{% block og_title %}{{ item.title }}{% endblock %}
+{% block og_description %}{{ item.title }}{% if item.price %} — ${{ item.price }}{% endif %}{% if item.store %} at {{ item.store }}{% endif %}{% endblock %}
+{% block og_image %}{% if item.image %}{{ item.image.url }}{% endif %}{% endblock %}
 
 {% block content %}
 <div class="item-detail">

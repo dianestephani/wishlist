@@ -361,22 +361,22 @@ def public_profile(request, username):
         from_user=request.user, to_user=profile_user, status=FriendRequest.Status.PENDING
     ).exists()
 
-    public_wishlists = None
-    public_events = None
-    public_activities = None
+    wishlists = None
+    events = None
+    activities = None
     if is_self or is_friend:
-        public_wishlists = Wishlist.objects.filter(owner=profile_user, is_public=True)
-        public_events = Event.objects.filter(owner=profile_user, is_public=True)
-        public_activities = Activity.objects.filter(owner=profile_user, is_public=True)
+        wishlists = Wishlist.objects.filter(owner=profile_user)
+        events = Event.objects.filter(owner=profile_user)
+        activities = Activity.objects.filter(owner=profile_user)
 
     context = {
         "profile_user": profile_user,
         "is_self": is_self,
         "is_friend": is_friend,
         "has_pending_request": has_pending_request,
-        "public_wishlists": public_wishlists,
-        "public_events": public_events,
-        "public_activities": public_activities,
+        "wishlists": wishlists,
+        "events": events,
+        "activities": activities,
     }
     return render(request, "wishlist/public_profile.html", context)
 

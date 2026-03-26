@@ -88,14 +88,47 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
-    },
-}
+SUPABASE_S3_ACCESS_KEY = os.environ.get("SUPABASE_S3_ACCESS_KEY", "")
+SUPABASE_S3_SECRET_KEY = os.environ.get("SUPABASE_S3_SECRET_KEY", "")
+SUPABASE_S3_BUCKET = os.environ.get("SUPABASE_S3_BUCKET", "wishlist-media")
+SUPABASE_S3_ENDPOINT = os.environ.get(
+    "SUPABASE_S3_ENDPOINT",
+    "https://fpelpasqzaraeatdmvcx.supabase.co/storage/v1/s3",
+)
+SUPABASE_S3_CUSTOM_DOMAIN = os.environ.get(
+    "SUPABASE_S3_CUSTOM_DOMAIN",
+    "fpelpasqzaraeatdmvcx.supabase.co/storage/v1/object/public/wishlist-media",
+)
+
+if SUPABASE_S3_ACCESS_KEY:
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "access_key": SUPABASE_S3_ACCESS_KEY,
+                "secret_key": SUPABASE_S3_SECRET_KEY,
+                "bucket_name": SUPABASE_S3_BUCKET,
+                "region_name": "us-west-1",
+                "endpoint_url": SUPABASE_S3_ENDPOINT,
+                "custom_domain": SUPABASE_S3_CUSTOM_DOMAIN,
+                "default_acl": None,
+                "querystring_auth": False,
+                "file_overwrite": False,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
 
 WHITENOISE_USE_FINDERS = True
 

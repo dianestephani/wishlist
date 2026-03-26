@@ -16,11 +16,11 @@
     --green-dark: #059669;
     --red: #ef4444;
     --red-dark: #dc2626;
-    --glass-bg: rgba(255, 255, 255, 0.82);
-    --glass-border: rgba(255, 255, 255, 0.45);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    --text: #1e1e2e;
-    --text-muted: #6b7280;
+    --glass-bg: rgba(20, 10, 30, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --text: #f5f0f8;
+    --text-muted: #c4b5d0;
     --radius: 12px;
 }
 
@@ -39,6 +39,7 @@ body {
     position: fixed;
     inset: 0;
     background: url('../images/background.jpg') center/cover no-repeat;
+    filter: brightness(1.15);
     z-index: -2;
 }
 
@@ -47,9 +48,9 @@ body {
     inset: 0;
     background: linear-gradient(
         135deg,
-        rgba(253, 242, 248, 0.88) 0%,
-        rgba(252, 231, 243, 0.82) 40%,
-        rgba(245, 208, 254, 0.78) 100%
+        rgba(15, 5, 25, 0.52) 0%,
+        rgba(30, 10, 40, 0.45) 40%,
+        rgba(20, 5, 35, 0.50) 100%
     );
     z-index: -1;
 }
@@ -116,7 +117,7 @@ main {
 
 /* ===== Footer ===== */
 footer {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(15, 5, 25, 0.5);
     backdrop-filter: blur(10px);
     text-align: center;
     padding: 1rem;
@@ -147,7 +148,7 @@ footer {
 
 .auth-form h1 {
     margin-bottom: 1.5rem;
-    color: var(--pink);
+    color: var(--pink-light);
 }
 
 .form-group {
@@ -164,10 +165,12 @@ footer {
 .form-group input {
     width: 100%;
     padding: 0.55rem 0.75rem;
-    border: 1px solid #e0d4e8;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     font-size: 0.95rem;
     font-family: inherit;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -217,7 +220,7 @@ footer {
 }
 
 .auth-link a {
-    color: var(--pink);
+    color: var(--pink-light);
     font-weight: 600;
     text-decoration: none;
 }
@@ -237,7 +240,7 @@ footer {
 }
 
 .wishlist-header h1 {
-    color: var(--magenta);
+    color: var(--pink-light);
 }
 
 .sort-form {
@@ -253,11 +256,12 @@ footer {
 
 .sort-form select {
     padding: 0.4rem 0.6rem;
-    border: 1px solid #e0d4e8;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     font-size: 0.85rem;
     font-family: inherit;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(20, 10, 30, 0.5);
+    color: var(--text);
 }
 
 /* ===== Card grid ===== */
@@ -292,7 +296,7 @@ footer {
 }
 
 .card-image-placeholder {
-    background: linear-gradient(135deg, var(--pink-soft) 0%, #f3e8ff 100%);
+    background: linear-gradient(135deg, rgba(233, 30, 140, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -328,8 +332,8 @@ footer {
 }
 
 .card-tag {
-    background: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%);
-    color: var(--magenta);
+    background: rgba(233, 30, 140, 0.15);
+    color: var(--pink-light);
     padding: 0.2rem 0.65rem;
     border-radius: 20px;
     font-size: 0.75rem;
@@ -370,12 +374,12 @@ footer {
 
 .card-purchased .card-title {
     text-decoration: line-through;
-    color: #aaa;
+    color: rgba(255, 255, 255, 0.35);
 }
 
 .card-purchased .card-price {
     text-decoration: line-through;
-    color: #aaa;
+    color: rgba(255, 255, 255, 0.35);
 }
 
 .purchased-badge {
@@ -424,7 +428,8 @@ footer {
 }
 
 .modal {
-    background: #fff;
+    background: rgba(25, 15, 35, 0.92);
+    backdrop-filter: blur(20px);
     border-radius: var(--radius);
     padding: 2rem;
     max-width: 520px;
@@ -437,7 +442,7 @@ footer {
 
 .modal h2 {
     margin-bottom: 0.25rem;
-    color: var(--pink);
+    color: var(--pink-light);
 }
 
 .modal-item-title {
@@ -454,7 +459,7 @@ footer {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #bbb;
+    color: var(--text-muted);
     line-height: 1;
     transition: color 0.2s;
 }
@@ -488,8 +493,10 @@ footer {
 .auth-form textarea {
     width: 100%;
     padding: 0.55rem 0.75rem;
-    border: 1px solid #e0d4e8;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
     font-size: 0.92rem;
     font-family: inherit;
     resize: vertical;
@@ -524,7 +531,7 @@ footer {
 }
 
 .btn-confirm-purchase:disabled {
-    background: #d1d5db;
+    background: rgba(255, 255, 255, 0.15);
     cursor: not-allowed;
 }
 
@@ -583,7 +590,7 @@ footer {
 .back-link {
     display: inline-block;
     margin-bottom: 1.5rem;
-    color: var(--pink);
+    color: var(--pink-light);
     text-decoration: none;
     font-size: 0.88rem;
     font-weight: 500;
@@ -636,7 +643,7 @@ footer {
 }
 
 .item-status-purchased {
-    color: #aaa;
+    color: rgba(255, 255, 255, 0.4);
 }
 
 /* ===== Event log / admin tables ===== */
@@ -653,7 +660,7 @@ footer {
 .event-log h2 {
     font-size: 1.1rem;
     margin-bottom: 1rem;
-    color: var(--magenta);
+    color: var(--pink-light);
 }
 
 .event-table {
@@ -666,13 +673,13 @@ footer {
 .event-table td {
     text-align: left;
     padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid #f3e8ff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .event-table th {
-    background: linear-gradient(135deg, #fdf2f8 0%, #f3e8ff 100%);
+    background: rgba(233, 30, 140, 0.1);
     font-weight: 600;
-    color: var(--magenta);
+    color: var(--pink-light);
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;

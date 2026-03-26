@@ -640,6 +640,24 @@ class ItemDetailViewTests(TestCase):
         self.assertContains(response, "Tech")
         self.assertContains(response, "Visit Store")
 
+    def test_og_meta_tags_present(self):
+        self.client.login(username="owner", password="pass123")
+        response = self.client.get(self.url)
+        content = response.content.decode()
+        self.assertIn('og:title', content)
+        self.assertIn('Detail Item', content)
+        self.assertIn('og:description', content)
+        self.assertIn('og:image', content)
+
+    def test_og_description_includes_price_and_store(self):
+        self.item.store = "TestStore"
+        self.item.save()
+        self.client.login(username="owner", password="pass123")
+        response = self.client.get(self.url)
+        content = response.content.decode()
+        self.assertIn("75.00", content)
+        self.assertIn("TestStore", content)
+
     def test_regular_user_cannot_see_event_log(self):
         regular = User.objects.create_user(
             username="regular", email="regular@example.com", password="pass123"
@@ -793,3 +811,34 @@ class VisitStoreViewTests(TestCase):
         url = reverse("wishlist:visit_store", args=[99999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# OG meta tag tests
+# ---------------------------------------------------------------------------
+class OGMetaTagTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+
+    def test_base_template_has_og_tags(self):
+        self.client.login(username="testuser", password="pass123")
+        response = self.client.get(reverse("wishlist:index"))
+        content = response.content.decode()
+        self.assertIn('og:title', content)
+        self.assertIn('og:description', content)
+        self.assertIn('og:image', content)
+        self.assertIn('twitter:card', content)
+
+    def test_login_page_has_og_tags(self):
+        response = self.client.get(reverse("wishlist:login"))
+        content = response.content.decode()
+        self.assertIn('og:title', content)
+        self.assertIn('og:image', content)
+
+    def test_register_page_has_og_tags(self):
+        response = self.client.get(reverse("wishlist:register"))
+        content = response.content.decode()
+        self.assertIn('og:title', content)
+        self.assertIn('og:image', content)

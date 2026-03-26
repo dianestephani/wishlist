@@ -57,9 +57,9 @@ body {
 
 /* ===== Header ===== */
 header {
-    background: linear-gradient(135deg, var(--pink) 0%, var(--magenta) 100%);
+    background: linear-gradient(135deg, #7c3aed 0%, #581c87 100%);
     padding: 1rem 2rem;
-    box-shadow: 0 4px 20px var(--pink-glow);
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35);
 }
 
 header nav {

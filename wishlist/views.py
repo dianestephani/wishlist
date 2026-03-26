@@ -32,9 +32,23 @@ def dashboard(request):
 
 
 @login_required
+def wishlist_detail(request, wishlist_id):
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, user=request.user)
+    items = WishlistItem.objects.filter(user=request.user).select_related("purchase")
+    context = {"wishlist_obj": wl, "items": items}
+    return render(request, "wishlist/wishlist_detail.html", context)
+
+
+@login_required
 def events_list(request):
     events = Event.objects.filter(user=request.user)
     return render(request, "wishlist/events.html", {"events": events})
+
+
+@login_required
+def event_detail(request, event_id):
+    event = get_object_or_404(Event, pk=event_id, user=request.user)
+    return render(request, "wishlist/event_detail.html", {"event": event})
 
 
 @login_required

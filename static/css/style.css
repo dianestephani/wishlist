@@ -788,7 +788,7 @@ strong {
     transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
     flex-direction: column;
-    min-height: 200px;
+    min-height: 240px;
 }
 
 .dashboard-card:hover {
@@ -819,6 +819,23 @@ strong {
     gap: 0.5rem;
 }
 
+.dashboard-card-item-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    padding: 0.3rem 0.5rem;
+    margin: -0.3rem -0.5rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+
+.dashboard-card-item-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
 .dashboard-card-item-title {
     font-size: 0.88rem;
     font-weight: 500;
@@ -831,13 +848,32 @@ strong {
     white-space: nowrap;
 }
 
+.dashboard-card-see-all {
+    display: block;
+    text-align: right;
+    margin-top: auto;
+    padding-top: 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--pink-light);
+    text-decoration: none;
+}
+
+.dashboard-card-see-all:hover {
+    text-decoration: underline;
+}
+
 .dashboard-card-empty {
     color: var(--text-muted);
-    font-size: 0.88rem;
+    font-size: 0.92rem;
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 0.25rem;
 }
 
 /* ===== Page header (sub-pages) ===== */
@@ -848,6 +884,42 @@ strong {
 .page-title {
     color: #fff;
     text-shadow: 0 0 20px var(--pink-glow), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.page-description {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+/* ===== Event detail ===== */
+.event-detail-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-shadow);
+    padding: 1.5rem;
+}
+
+.event-detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.event-detail-row:last-child {
+    border-bottom: none;
+}
+
+.event-detail-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pink-light);
 }
 
 .dashboard-list {

@@ -9,32 +9,37 @@
 
     <div class="dashboard-cards">
         <!-- Wishlists -->
-        <a href="{% url 'wishlist:index' %}" class="dashboard-card">
+        <div class="dashboard-card">
             <h2>Wishlists</h2>
             {% if wishlists %}
                 <ul class="dashboard-card-list">
                     {% for wl in wishlists %}
                         <li>
-                            <span class="dashboard-card-item-title">{{ wl.title }}</span>
-                            <span class="dashboard-card-item-date">{{ wl.created_at|date:"M d, Y" }}</span>
+                            <a href="{% url 'wishlist:wishlist_detail' wl.id %}" class="dashboard-card-item-link">
+                                <span class="dashboard-card-item-title">{{ wl.title }}</span>
+                                <span class="dashboard-card-item-date">{{ wl.created_at|date:"M d, Y" }}</span>
+                            </a>
                         </li>
                     {% endfor %}
                 </ul>
             {% else %}
                 <p class="dashboard-card-empty">No wishlists yet.</p>
             {% endif %}
-        </a>
+            <a href="{% url 'wishlist:index' %}" class="dashboard-card-see-all">See All</a>
+        </div>
 
         <!-- Events -->
-        <a href="{% url 'wishlist:events' %}" class="dashboard-card">
+        <div class="dashboard-card">
             <h2>Events</h2>
             {% if events %}
                 <ul class="dashboard-card-list">
                     {% timezone "America/Los_Angeles" %}
                     {% for event in events %}
                         <li>
-                            <span class="dashboard-card-item-title">{{ event.title }}</span>
-                            <span class="dashboard-card-item-date">{{ event.date|date:"M d, Y" }}</span>
+                            <a href="{% url 'wishlist:event_detail' event.id %}" class="dashboard-card-item-link">
+                                <span class="dashboard-card-item-title">{{ event.title }}</span>
+                                <span class="dashboard-card-item-date">{{ event.date|date:"M d, Y" }}</span>
+                            </a>
                         </li>
                     {% endfor %}
                     {% endtimezone %}
@@ -42,18 +47,21 @@
             {% else %}
                 <p class="dashboard-card-empty">No events yet.</p>
             {% endif %}
-        </a>
+            <a href="{% url 'wishlist:events' %}" class="dashboard-card-see-all">See All</a>
+        </div>
 
         <!-- Activities -->
-        <a href="{% url 'wishlist:activities' %}" class="dashboard-card">
+        <div class="dashboard-card">
             <h2>Activities</h2>
             {% if recent_purchases %}
                 <ul class="dashboard-card-list">
                     {% timezone "America/Los_Angeles" %}
                     {% for purchase in recent_purchases %}
                         <li>
-                            <span class="dashboard-card-item-title">{{ purchase.item.title }}</span>
-                            <span class="dashboard-card-item-date">{{ purchase.purchased_at|date:"M d, Y" }}</span>
+                            <a href="{% url 'wishlist:item_detail' purchase.item.id %}" class="dashboard-card-item-link">
+                                <span class="dashboard-card-item-title">{{ purchase.item.title }}</span>
+                                <span class="dashboard-card-item-date">{{ purchase.purchased_at|date:"M d, Y" }}</span>
+                            </a>
                         </li>
                     {% endfor %}
                     {% endtimezone %}
@@ -61,7 +69,8 @@
             {% else %}
                 <p class="dashboard-card-empty">No activities yet.</p>
             {% endif %}
-        </a>
+            <a href="{% url 'wishlist:activities' %}" class="dashboard-card-see-all">See All</a>
+        </div>
     </div>
 </div>
 {% endblock %}

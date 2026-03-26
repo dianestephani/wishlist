@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block title %}{{ event.title }} - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:events' %}" class="back-link">&larr; Back to Events</a>
+    <h1 class="page-title">{{ event.title }}</h1>
+</div>
+
+<div class="event-detail-card">
+    {% timezone "America/Los_Angeles" %}
+    <div class="event-detail-row">
+        <span class="event-detail-label">Date</span>
+        <span>{{ event.date|date:"l, F d, Y \a\t g:i A T" }}</span>
+    </div>
+
+    {% if event.location %}
+        <div class="event-detail-row">
+            <span class="event-detail-label">Location</span>
+            <span>{{ event.location }}</span>
+        </div>
+    {% endif %}
+
+    {% if event.description %}
+        <div class="event-detail-row">
+            <span class="event-detail-label">Description</span>
+            <span>{{ event.description|linebreaksbr }}</span>
+        </div>
+    {% endif %}
+    {% endtimezone %}
+</div>
+{% endblock %}

@@ -44,7 +44,35 @@
                             <a href="#" onclick="openCreateModal('activity'); return false;">Create Activity</a>
                         </div>
                     </div>
-                    <a href="{% url 'wishlist:profile' %}" class="nav-avatar" title="{{ user.username }}">{{ user.first_name|make_list|first|default:"?" }}{{ user.last_name|make_list|first|default:"" }}</a>
+                    <div class="notif-dropdown">
+                        <button type="button" class="btn-notif" onclick="toggleNotifications()" aria-label="Notifications">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        </button>
+                        <div id="notif-panel" class="notif-panel">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <div class="notif-tabs">
+                                    <button type="button" class="notif-tab active" id="tab-messages" onclick="switchNotifTab('messages')">Messages</button>
+                                    <button type="button" class="notif-tab" id="tab-activity" onclick="switchNotifTab('activity')">Activity</button>
+                                    <button type="button" class="notif-tab" id="tab-friends" onclick="switchNotifTab('friends')">Friends</button>
+                                </div>
+                            </div>
+                            <div id="notif-list-messages" class="notif-list">
+                                <p class="notif-empty">Loading...</p>
+                            </div>
+                            <div id="notif-list-activity" class="notif-list" style="display: none;">
+                                <p class="notif-empty">Loading...</p>
+                            </div>
+                            <div id="notif-list-friends" class="notif-list" style="display: none;">
+                                <p class="notif-empty">Loading...</p>
+                            </div>
+                            <div class="notif-footer">
+                                <a href="{% url 'wishlist:inbox' %}">View All Messages</a>
+                                <a href="{% url 'wishlist:activity_feed' %}">View All Activity</a>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{% url 'wishlist:profile' %}" class="nav-avatar" style="background: {{ user.avatar_color|default:'#5eead4' }}" title="{{ user.username }}">{{ user.initials }}</a>
                     <a href="{% url 'wishlist:logout' %}">Logout</a>
                 {% else %}
                     <a href="{% url 'wishlist:login' %}">Login</a>
@@ -264,6 +292,125 @@
             modal.classList.add("modal-hidden");
         }
     }
+
+    var tabLoaded = {messages: false, activity: false, friends: false};
+
+    function toggleNotifications() {
+        var panel = document.getElementById("notif-panel");
+        if (!panel) return;
+        panel.classList.toggle("notif-panel-open");
+        if (!tabLoaded.messages) {
+            fetchMessages();
+            tabLoaded.messages = true;
+        }
+    }
+
+    function switchNotifTab(tab) {
+        ["messages", "activity", "friends"].forEach(function(t) {
+            document.getElementById("tab-" + t).classList.toggle("active", t === tab);
+            document.getElementById("notif-list-" + t).style.display = t === tab ? "block" : "none";
+        });
+        if (!tabLoaded[tab]) {
+            if (tab === "messages") fetchMessages();
+            else if (tab === "activity") fetchActivity();
+            else if (tab === "friends") fetchFriendRequests();
+            tabLoaded[tab] = true;
+        }
+    }
+
+    function fetchMessages() {
+        var list = document.getElementById("notif-list-messages");
+        fetch("{% url 'wishlist:notifications_api' %}")
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.notifications.length) {
+                    list.innerHTML = '<p class="notif-empty">No messages yet.</p>';
+                    return;
+                }
+                var html = "";
+                data.notifications.forEach(function(n) {
+                    var date = new Date(n.created_at);
+                    var time = date.toLocaleDateString("en-US", {month: "short", day: "numeric"}) + ", " + date.toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit"});
+                    html += '<a href="/item/' + n.item_id + '/" class="notif-item">';
+                    html += '<div class="notif-item-content">';
+                    html += '<span class="notif-item-action">' + n.user + ' — ' + n.event_type + '</span>';
+                    html += '<span class="notif-item-title">' + n.item_title + '</span>';
+                    if (n.message) html += '<span class="notif-item-message">"' + n.message + '"</span>';
+                    html += '</div>';
+                    html += '<span class="notif-item-time">' + time + '</span>';
+                    html += '</a>';
+                });
+                list.innerHTML = html;
+            })
+            .catch(function() { list.innerHTML = '<p class="notif-empty">Failed to load.</p>'; });
+    }
+
+    function fetchActivity() {
+        var list = document.getElementById("notif-list-activity");
+        fetch("{% url 'wishlist:activity_feed_api' %}")
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.notifications.length) {
+                    list.innerHTML = '<p class="notif-empty">No activity yet.</p>';
+                    return;
+                }
+                var html = "";
+                data.notifications.forEach(function(n) {
+                    var date = new Date(n.created_at);
+                    var time = date.toLocaleDateString("en-US", {month: "short", day: "numeric"}) + ", " + date.toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit"});
+                    html += '<div class="notif-item">';
+                    html += '<div class="notif-fr-avatar" style="background:' + n.sender_color + '">' + n.sender_initials + '</div>';
+                    html += '<div class="notif-item-content">';
+                    html += '<span class="notif-item-action">' + n.sender_name + '</span>';
+                    html += '<span class="notif-item-title">' + n.subject + '</span>';
+                    if (n.content) html += '<span class="notif-item-message">' + n.content + '</span>';
+                    html += '</div>';
+                    html += '<span class="notif-item-time">' + time + '</span>';
+                    html += '</div>';
+                });
+                list.innerHTML = html;
+            })
+            .catch(function() { list.innerHTML = '<p class="notif-empty">Failed to load.</p>'; });
+    }
+
+    function fetchFriendRequests() {
+        var list = document.getElementById("notif-list-friends");
+        fetch("{% url 'wishlist:friend_requests_api' %}")
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.friend_requests.length) {
+                    list.innerHTML = '<p class="notif-empty">No friend requests.</p>';
+                    return;
+                }
+                var html = "";
+                data.friend_requests.forEach(function(fr) {
+                    var initials = (fr.from_first ? fr.from_first[0] : "?") + (fr.from_last ? fr.from_last[0] : "");
+                    html += '<div class="notif-item notif-friend-request">';
+                    html += '<div class="notif-item-content">';
+                    html += '<span class="notif-fr-avatar">' + initials + '</span>';
+                    html += '<div>';
+                    html += '<span class="notif-item-title">' + fr.from_user + '</span>';
+                    html += '<span class="notif-item-action">wants to be your friend</span>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '<div class="notif-fr-actions">';
+                    html += '<a href="' + fr.accept_url + '" class="btn-fr-accept">Accept</a>';
+                    html += '<a href="' + fr.deny_url + '" class="btn-fr-deny">Deny</a>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                list.innerHTML = html;
+            })
+            .catch(function() { list.innerHTML = '<p class="notif-empty">Failed to load.</p>'; });
+    }
+
+    document.addEventListener("click", function(e) {
+        var dropdown = document.querySelector(".notif-dropdown");
+        var panel = document.getElementById("notif-panel");
+        if (dropdown && panel && !dropdown.contains(e.target)) {
+            panel.classList.remove("notif-panel-open");
+        }
+    });
     </script>
     {% block extra_js %}{% endblock %}
 </body>

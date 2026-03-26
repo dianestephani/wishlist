@@ -534,6 +534,15 @@ strong {
     cursor: pointer;
 }
 
+.card-title-link {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.card-title-link:hover {
+    color: var(--pink-light);
+}
+
 .card-date {
     font-size: 0.88rem;
     font-weight: 500;
@@ -687,6 +696,73 @@ strong {
     cursor: pointer;
     margin-top: 0.75rem;
     transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-delete-confirm {
+    width: 100%;
+    padding: 0.65rem;
+    background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.75rem;
+    transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-delete-confirm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}
+
+.detail-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.btn-edit {
+    padding: 0.4rem 1rem;
+    background: linear-gradient(135deg, #7c3aed 0%, #581c87 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-edit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+    color: #fff;
+}
+
+.btn-delete {
+    padding: 0.4rem 1rem;
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--red);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.15s;
+}
+
+.btn-delete:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: var(--red);
 }
 
 .btn-modal-submit:hover {

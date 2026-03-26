@@ -91,6 +91,122 @@ def wishlist_detail(request, wishlist_id):
 
 
 @login_required
+def edit_wishlist(request, wishlist_id):
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, user=request.user)
+    if request.method == "POST":
+        form = WishlistForm(request.POST, instance=wl)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Wishlist "{wl.title}" updated!')
+            return redirect("wishlist:wishlist_detail", wishlist_id=wl.pk)
+    else:
+        form = WishlistForm(instance=wl)
+    return render(request, "wishlist/edit_wishlist.html", {"form": form, "wishlist_obj": wl})
+
+
+@login_required
+def delete_wishlist(request, wishlist_id):
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, user=request.user)
+    if request.method == "POST":
+        title = wl.title
+        wl.delete()
+        messages.success(request, f'Wishlist "{title}" deleted.')
+        return redirect("wishlist:dashboard")
+    return render(request, "wishlist/confirm_delete.html", {"object": wl, "type": "wishlist"})
+
+
+@login_required
+def add_item(request, wishlist_id):
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, user=request.user)
+    if request.method == "POST":
+        form = WishlistItemForm(request.POST, request.FILES)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.user = request.user
+            item.save()
+            messages.success(request, f'"{item.title}" added to your wishlist!')
+            return redirect("wishlist:wishlist_detail", wishlist_id=wl.pk)
+    else:
+        form = WishlistItemForm()
+    return render(request, "wishlist/add_item.html", {"form": form, "wishlist_obj": wl})
+
+
+@login_required
+def edit_item(request, item_id):
+    item = get_object_or_404(WishlistItem, pk=item_id, user=request.user)
+    if request.method == "POST":
+        form = WishlistItemForm(request.POST, request.FILES, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'"{item.title}" updated!')
+            return redirect("wishlist:item_detail", item_id=item.pk)
+    else:
+        form = WishlistItemForm(instance=item)
+    return render(request, "wishlist/edit_item.html", {"form": form, "item": item})
+
+
+@login_required
+def delete_item(request, item_id):
+    item = get_object_or_404(WishlistItem, pk=item_id, user=request.user)
+    if request.method == "POST":
+        title = item.title
+        item.delete()
+        messages.success(request, f'"{title}" deleted.')
+        return redirect("wishlist:index")
+    return render(request, "wishlist/confirm_delete.html", {"object": item, "type": "item"})
+
+
+@login_required
+def edit_event(request, event_id):
+    event = get_object_or_404(Event, pk=event_id, created_by=request.user)
+    if request.method == "POST":
+        form = EventForm(request.POST, instance=event)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Event "{event.title}" updated!')
+            return redirect("wishlist:event_detail", event_id=event.pk)
+    else:
+        form = EventForm(instance=event)
+    return render(request, "wishlist/edit_event.html", {"form": form, "event": event})
+
+
+@login_required
+def delete_event(request, event_id):
+    event = get_object_or_404(Event, pk=event_id, created_by=request.user)
+    if request.method == "POST":
+        title = event.title
+        event.delete()
+        messages.success(request, f'Event "{title}" deleted.')
+        return redirect("wishlist:events")
+    return render(request, "wishlist/confirm_delete.html", {"object": event, "type": "event"})
+
+
+@login_required
+def edit_activity(request, activity_id):
+    activity = get_object_or_404(Activity, pk=activity_id, created_by=request.user)
+    if request.method == "POST":
+        form = ActivityForm(request.POST, instance=activity)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Activity "{activity.title}" updated!')
+            return redirect("wishlist:activities")
+    else:
+        form = ActivityForm(instance=activity)
+    return render(request, "wishlist/edit_activity.html", {"form": form, "activity": activity})
+
+
+@login_required
+def delete_activity(request, activity_id):
+    activity = get_object_or_404(Activity, pk=activity_id, created_by=request.user)
+    if request.method == "POST":
+        title = activity.title
+        activity.delete()
+        messages.success(request, f'Activity "{title}" deleted.')
+        return redirect("wishlist:activities")
+    return render(request, "wishlist/confirm_delete.html", {"object": activity, "type": "activity"})
+
+
+@login_required
 def events_list(request):
     events = Event.objects.filter(created_by=request.user)
     return render(request, "wishlist/events.html", {"events": events})

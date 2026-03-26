@@ -8,7 +8,7 @@ from django.db.models import Max, Q
 from django.http import JsonResponse
 
 from .forms import ActivityForm, EventForm, MessageForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
-from .messaging import get_or_create_conversation, send_message_and_notify
+from .messaging import get_or_create_conversation, notify, send_message
 from .models import Activity, Conversation, Event, FriendRequest, Friendship, ItemEvent, ItemView, Message, Notification, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
@@ -479,16 +479,18 @@ def mark_purchased(request, item_id):
             )
             item.status = WishlistItem.Status.PURCHASED
             item.save()
-            # Notify item owner + create message thread
+            # Notify item owner; only create message if custom text provided
             if request.user != item.user:
                 wl_name = item.wishlist.name if item.wishlist else "a wishlist"
                 subject = f'"{item.title}" was purchased from {wl_name}!'
-                content = message if message else f'{request.user.first_name or request.user.username} purchased "{item.title}" for you.'
-                send_message_and_notify(
+                notif_content = message if message else f'{request.user.first_name or request.user.username} purchased "{item.title}" for you.'
+                notify(
                     sender=request.user, recipient=item.user,
-                    subject=subject, content=content,
+                    subject=subject, content=notif_content,
                     notif_type=Notification.NotifType.WISHLIST, related_id=item.pk,
                 )
+                if message:
+                    send_message(sender=request.user, recipient=item.user, subject=subject, content=message)
             messages.success(request, f'"{item.title}" has been marked as purchased. Thank you!')
             return redirect("wishlist:index")
     else:
@@ -517,15 +519,17 @@ def undo_purchase(request, item_id):
             )
             item.status = WishlistItem.Status.AVAILABLE
             item.save()
-            # Notify item owner
+            # Notify item owner; only create message if custom text provided
             if request.user != item.user:
                 subject = f'"{item.title}" is no longer marked as purchased'
-                content = message if message else f'{request.user.first_name or request.user.username} undid their purchase of "{item.title}".'
-                send_message_and_notify(
+                notif_content = message if message else f'{request.user.first_name or request.user.username} undid their purchase of "{item.title}".'
+                notify(
                     sender=request.user, recipient=item.user,
-                    subject=subject, content=content,
+                    subject=subject, content=notif_content,
                     notif_type=Notification.NotifType.WISHLIST, related_id=item.pk,
                 )
+                if message:
+                    send_message(sender=request.user, recipient=item.user, subject=subject, content=message)
             messages.info(request, f'"{item.title}" has been reverted to available.')
             return redirect("wishlist:index")
     else:

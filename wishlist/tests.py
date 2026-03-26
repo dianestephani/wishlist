@@ -2589,16 +2589,23 @@ class MessagingHelperTests(TestCase):
         convo2 = get_or_create_conversation(self.u1, self.u2)
         self.assertEqual(convo1.pk, convo2.pk)
 
-    def test_send_message_and_notify(self):
-        from .messaging import send_message_and_notify
-        msg = send_message_and_notify(
+    def test_notify_creates_notification_only(self):
+        from .messaging import notify
+        n = notify(
             sender=self.u1, recipient=self.u2,
             subject="Test", content="Body",
             notif_type=Notification.NotifType.WISHLIST,
         )
-        self.assertEqual(Message.objects.count(), 1)
         self.assertEqual(Notification.objects.count(), 1)
-        self.assertEqual(msg.subject, "Test")
+        self.assertEqual(Message.objects.count(), 0)
+        self.assertEqual(n.subject, "Test")
+
+    def test_send_message_creates_message_only(self):
+        from .messaging import send_message
+        msg = send_message(sender=self.u1, recipient=self.u2, subject="Hi", content="Hello")
+        self.assertEqual(Message.objects.count(), 1)
+        self.assertEqual(Notification.objects.count(), 0)
+        self.assertEqual(msg.subject, "Hi")
 
 
 # ---------------------------------------------------------------------------
@@ -2750,11 +2757,32 @@ class PurchaseNotificationTests(TestCase):
         self.assertIn("Cool Gift", notif.subject)
         self.assertEqual(notif.type, "wishlist")
 
-    def test_purchase_creates_message(self):
+    def test_purchase_with_message_creates_conversation(self):
+        url = reverse("wishlist:mark_purchased", args=[self.item.pk])
+        self.client.post(url, {"confirm": True, "message": "Happy birthday!"})
+        self.assertEqual(Message.objects.count(), 1)
+        self.assertEqual(Message.objects.first().content, "Happy birthday!")
+
+    def test_purchase_without_message_no_conversation(self):
         url = reverse("wishlist:mark_purchased", args=[self.item.pk])
         self.client.post(url, {"confirm": True})
+        self.assertEqual(Message.objects.count(), 0)
+
+    def test_undo_with_message_creates_conversation(self):
+        Purchase.objects.create(item=self.item, purchased_by=self.buyer)
+        self.item.status = WishlistItem.Status.PURCHASED
+        self.item.save()
+        url = reverse("wishlist:undo_purchase", args=[self.item.pk])
+        self.client.post(url, {"message": "Sorry about that!"})
         self.assertEqual(Message.objects.count(), 1)
-        self.assertEqual(Conversation.objects.count(), 1)
+
+    def test_undo_without_message_no_conversation(self):
+        Purchase.objects.create(item=self.item, purchased_by=self.buyer)
+        self.item.status = WishlistItem.Status.PURCHASED
+        self.item.save()
+        url = reverse("wishlist:undo_purchase", args=[self.item.pk])
+        self.client.post(url, {})
+        self.assertEqual(Message.objects.count(), 0)
 
     def test_undo_creates_notification(self):
         Purchase.objects.create(item=self.item, purchased_by=self.buyer)

@@ -1,4 +1,4 @@
-"""Helpers for creating messages and notifications together."""
+"""Helpers for creating messages and notifications."""
 from .models import Conversation, Message, Notification
 
 
@@ -12,16 +12,9 @@ def get_or_create_conversation(user_a, user_b):
     return convo
 
 
-def send_message_and_notify(sender, recipient, subject, content, notif_type, related_id=None):
-    """Create both a Message in a conversation and a Notification."""
-    convo = get_or_create_conversation(sender, recipient)
-    msg = Message.objects.create(
-        conversation=convo,
-        sender=sender,
-        subject=subject,
-        content=content,
-    )
-    Notification.objects.create(
+def notify(sender, recipient, subject, content, notif_type, related_id=None):
+    """Create a Notification only. No message thread."""
+    return Notification.objects.create(
         recipient=recipient,
         sender=sender,
         type=notif_type,
@@ -29,4 +22,14 @@ def send_message_and_notify(sender, recipient, subject, content, notif_type, rel
         content=content,
         related_object_id=related_id,
     )
-    return msg
+
+
+def send_message(sender, recipient, subject, content):
+    """Create a Message in a conversation. Used for direct messages and replies."""
+    convo = get_or_create_conversation(sender, recipient)
+    return Message.objects.create(
+        conversation=convo,
+        sender=sender,
+        subject=subject,
+        content=content,
+    )

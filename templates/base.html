@@ -30,6 +30,7 @@
                         <a href="{% url 'wishlist:index' %}">Wishlists</a>
                         <a href="{% url 'wishlist:events' %}">Events</a>
                         <a href="{% url 'wishlist:activities' %}">Activities</a>
+                        <a href="{% url 'wishlist:friends' %}">Friends</a>
                     </div>
                 {% endif %}
             </div>
@@ -61,6 +62,7 @@
                 <a href="{% url 'wishlist:index' %}">Wishlists</a>
                 <a href="{% url 'wishlist:events' %}">Events</a>
                 <a href="{% url 'wishlist:activities' %}">Activities</a>
+                <a href="{% url 'wishlist:friends' %}">Friends</a>
                 <div class="mobile-nav-divider"></div>
                 <a href="#" onclick="openCreateModal('wishlist'); toggleMobileNav(); return false;">Create Wishlist</a>
                 <a href="#" onclick="openCreateModal('event'); toggleMobileNav(); return false;">Create Event</a>

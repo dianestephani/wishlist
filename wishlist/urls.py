@@ -23,6 +23,8 @@ urlpatterns = [
     path("item/<int:item_id>/visit-store/", views.visit_store, name="visit_store"),
     path("item/<int:item_id>/purchase/", views.mark_purchased, name="mark_purchased"),
     path("item/<int:item_id>/undo-purchase/", views.undo_purchase, name="undo_purchase"),
+    # Friends
+    path("friends/", views.friends, name="friends"),
     # Events
     path("events/", views.events_list, name="events"),
     path("events/<int:event_id>/", views.event_detail, name="event_detail"),

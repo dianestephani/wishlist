@@ -207,6 +207,11 @@ def delete_activity(request, activity_id):
 
 
 @login_required
+def friends(request):
+    return render(request, "wishlist/friends.html")
+
+
+@login_required
 def events_list(request):
     events = Event.objects.filter(created_by=request.user)
     return render(request, "wishlist/events.html", {"events": events})

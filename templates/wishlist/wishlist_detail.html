@@ -1,14 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}{{ wishlist_obj.title }} - Wishlist{% endblock %}
+{% block title %}{{ wishlist_obj.name }} - Wishlist{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
-    <h1 class="page-title">{{ wishlist_obj.title }}</h1>
+    <a href="{% url 'wishlist:index' %}" class="back-link">&larr; Back to Wishlists</a>
+    <h1 class="page-title">{{ wishlist_obj.name }}</h1>
     {% if wishlist_obj.description %}
         <p class="page-description">{{ wishlist_obj.description }}</p>
     {% endif %}
+    <div class="detail-actions">
+        <a href="{% url 'wishlist:add_item' wishlist_obj.id %}" class="btn-edit">Add Item</a>
+        <a href="{% url 'wishlist:edit_wishlist' wishlist_obj.id %}" class="btn-edit">Edit</a>
+        <a href="{% url 'wishlist:delete_wishlist' wishlist_obj.id %}" class="btn-delete">Delete</a>
+    </div>
+</div>
+
+<div class="welcome-message">
+    <p>Welcome to my custom wish list! Each item has a link that will take you to the store page to purchase. My site doesn't communicate directly with these store sites, so if you purchase something, you'll need to come back here and click "I've purchased this!"</p>
 </div>
 
 {% if items %}
@@ -64,4 +73,97 @@
 {% else %}
     <p class="empty-state">No items in this wishlist yet.</p>
 {% endif %}
+
+<!-- Purchase modal -->
+<div id="purchase-modal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+        <button type="button" class="modal-close" onclick="closePurchaseModal()">&times;</button>
+        <h2>Mark as Purchased</h2>
+        <p class="modal-item-title" id="modal-item-title"></p>
+
+        <form id="purchase-form" method="post" action="">
+            {% csrf_token %}
+
+            <div class="form-group checkbox-group">
+                <label>
+                    <input type="checkbox" name="confirm" id="purchase-confirm" required>
+                    <span>I confirm that I have purchased this item. If I have not purchased it and I click Confirm Purchase anyway, I understand that I am responsible for contacting Diane and telling her personally that I lied about getting her a birthday present.</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="purchase-message">Message</label>
+                <textarea name="message" id="purchase-message" rows="3" placeholder="Leave a message (optional)"></textarea>
+            </div>
+
+            <button type="submit" class="btn-confirm-purchase" id="btn-confirm-purchase" disabled>
+                Confirm Purchase
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Undo purchase modal -->
+<div id="undo-modal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+        <button type="button" class="modal-close" onclick="closeUndoModal()">&times;</button>
+        <h2>Just Kidding!</h2>
+        <p class="modal-item-title" id="undo-item-title"></p>
+
+        <p class="modal-description">Accidentally hit 'purchased' without actually buying? No problem! Just click the Submit button so I know exactly who lied to me.</p>
+
+        <form id="undo-form" method="post" action="">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="undo-message">Message</label>
+                <textarea name="message" id="undo-message" rows="3" placeholder="Explain yourself (optional)"></textarea>
+            </div>
+
+            <button type="submit" class="btn-shame">
+                Submit Your Shame
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openPurchaseModal(itemId, itemTitle) {
+        document.getElementById("modal-item-title").textContent = itemTitle;
+        document.getElementById("purchase-form").action = "/item/" + itemId + "/purchase/";
+        document.getElementById("purchase-confirm").checked = false;
+        document.getElementById("purchase-message").value = "";
+        document.getElementById("btn-confirm-purchase").disabled = true;
+        document.getElementById("purchase-modal").style.display = "flex";
+    }
+
+    function closePurchaseModal() {
+        document.getElementById("purchase-modal").style.display = "none";
+    }
+
+    document.getElementById("purchase-confirm").addEventListener("change", function () {
+        document.getElementById("btn-confirm-purchase").disabled = !this.checked;
+    });
+
+    document.getElementById("purchase-modal").addEventListener("click", function (e) {
+        if (e.target === this) closePurchaseModal();
+    });
+
+    function openUndoModal(itemId, itemTitle) {
+        document.getElementById("undo-item-title").textContent = itemTitle;
+        document.getElementById("undo-form").action = "/item/" + itemId + "/undo-purchase/";
+        document.getElementById("undo-message").value = "";
+        document.getElementById("undo-modal").style.display = "flex";
+    }
+
+    function closeUndoModal() {
+        document.getElementById("undo-modal").style.display = "none";
+    }
+
+    document.getElementById("undo-modal").addEventListener("click", function (e) {
+        if (e.target === this) closeUndoModal();
+    });
+</script>
 {% endblock %}

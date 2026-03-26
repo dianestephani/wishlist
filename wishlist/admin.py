@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Activity, Event, ItemEvent, ItemView, Purchase, StoreClick, User, Wishlist, WishlistItem
+from .models import Activity, Event, Friendship, ItemEvent, ItemView, Purchase, StoreClick, User, Wishlist, WishlistItem
 
 
 @admin.register(User)
@@ -88,21 +88,30 @@ class StoreClickAdmin(admin.ModelAdmin):
 
 @admin.register(Wishlist)
 class WishlistAdmin(admin.ModelAdmin):
-    list_display = ("title", "user", "created_at")
-    search_fields = ("title",)
+    list_display = ("name", "owner", "is_public", "created_at")
+    list_filter = ("is_public",)
+    search_fields = ("name",)
     readonly_fields = ("created_at",)
 
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("title", "created_by", "date", "start_time", "end_time", "address", "created_at")
-    list_filter = ("date",)
+    list_display = ("title", "owner", "date", "start_time", "end_time", "address", "is_public", "created_at")
+    list_filter = ("date", "is_public")
     search_fields = ("title", "address")
     readonly_fields = ("created_at",)
 
 
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
-    list_display = ("title", "created_by", "location", "created_at")
+    list_display = ("title", "owner", "location", "is_public", "created_at")
+    list_filter = ("is_public",)
     search_fields = ("title", "location")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(Friendship)
+class FriendshipAdmin(admin.ModelAdmin):
+    list_display = ("user", "friend", "created_at")
+    search_fields = ("user__username", "user__email", "friend__username", "friend__email")
     readonly_fields = ("created_at",)

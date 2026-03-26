@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Wishlist{% endblock %}</title>
-    <meta property="og:title" content="{% block og_title %}Wishlist{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}A wishlist app for tracking gifts and things you want.{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}{% static 'images/nintendo-switch-2.jpg' %}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Wishlist App{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}A social platform where you can create lists of items you want, activities you want to do, and events you want to attend.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'images/disco-ball.jpeg' %}{% endblock %}">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,12 +30,21 @@
                         <a href="{% url 'wishlist:index' %}">Wishlists</a>
                         <a href="{% url 'wishlist:events' %}">Events</a>
                         <a href="{% url 'wishlist:activities' %}">Activities</a>
+                        <a href="{% url 'wishlist:friends' %}">Friends</a>
                     </div>
                 {% endif %}
             </div>
             <div class="nav-links">
                 {% if user.is_authenticated %}
-                    <span class="nav-user">{{ user.username }}</span>
+                    <div class="create-dropdown">
+                        <button type="button" class="btn-create" onclick="toggleCreateMenu()">Create +</button>
+                        <div id="create-menu" class="create-menu">
+                            <a href="#" onclick="openCreateModal('wishlist'); return false;">Create Wishlist</a>
+                            <a href="#" onclick="openCreateModal('event'); return false;">Create Event</a>
+                            <a href="#" onclick="openCreateModal('activity'); return false;">Create Activity</a>
+                        </div>
+                    </div>
+                    <a href="{% url 'wishlist:profile' %}" class="nav-avatar" title="{{ user.username }}">{{ user.first_name|make_list|first|default:"?" }}{{ user.last_name|make_list|first|default:"" }}</a>
                     <a href="{% url 'wishlist:logout' %}">Logout</a>
                 {% else %}
                     <a href="{% url 'wishlist:login' %}">Login</a>
@@ -53,8 +62,13 @@
                 <a href="{% url 'wishlist:index' %}">Wishlists</a>
                 <a href="{% url 'wishlist:events' %}">Events</a>
                 <a href="{% url 'wishlist:activities' %}">Activities</a>
+                <a href="{% url 'wishlist:friends' %}">Friends</a>
                 <div class="mobile-nav-divider"></div>
-                <span class="mobile-nav-user">{{ user.username }}</span>
+                <a href="#" onclick="openCreateModal('wishlist'); toggleMobileNav(); return false;">Create Wishlist</a>
+                <a href="#" onclick="openCreateModal('event'); toggleMobileNav(); return false;">Create Event</a>
+                <a href="#" onclick="openCreateModal('activity'); toggleMobileNav(); return false;">Create Activity</a>
+                <div class="mobile-nav-divider"></div>
+                <a href="{% url 'wishlist:profile' %}">My Profile</a>
                 <a href="{% url 'wishlist:logout' %}">Logout</a>
             </div>
             {% else %}
@@ -80,6 +94,127 @@
         {% block content %}{% endblock %}
     </main>
 
+    {% if user.is_authenticated %}
+    <!-- Create Wishlist Modal -->
+    <div id="modal-wishlist" class="modal-overlay modal-hidden" onclick="if(event.target===this)closeCreateModal('wishlist')">
+        <div class="modal">
+            <button type="button" class="modal-close" onclick="closeCreateModal('wishlist')">&times;</button>
+            <h2>Create Wishlist</h2>
+            <form method="post" action="{% url 'wishlist:create_wishlist' %}" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="wl-name">Name</label>
+                    <input type="text" name="name" id="wl-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="wl-desc">Description</label>
+                    <textarea name="description" id="wl-desc" rows="2" placeholder="Description (optional)"></textarea>
+                </div>
+                <h3 class="form-section-title">First Item (optional)</h3>
+                <div class="form-group">
+                    <label for="item-title">Item Name</label>
+                    <input type="text" name="item-title" id="item-title" placeholder="Item name">
+                </div>
+                <div class="form-group">
+                    <label for="item-product_url">Product URL</label>
+                    <input type="url" name="item-product_url" id="item-product_url" placeholder="https://...">
+                </div>
+                <div class="form-group form-row">
+                    <div>
+                        <label for="item-price">Price</label>
+                        <input type="number" name="item-price" id="item-price" step="0.01" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label for="item-category">Category</label>
+                        <input type="text" name="item-category" id="item-category" placeholder="e.g. Gaming">
+                    </div>
+                </div>
+                <div class="form-group form-row">
+                    <div>
+                        <label for="item-brand">Brand</label>
+                        <input type="text" name="item-brand" id="item-brand" placeholder="e.g. Nintendo">
+                    </div>
+                    <div>
+                        <label for="item-store">Store</label>
+                        <input type="text" name="item-store" id="item-store" placeholder="e.g. Best Buy">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="item-image">Image</label>
+                    <input type="file" name="item-image" id="item-image" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label for="item-notes">Notes</label>
+                    <textarea name="item-notes" id="item-notes" rows="2" placeholder="Notes (optional)"></textarea>
+                </div>
+                <button type="submit" class="btn-modal-submit">Create Wishlist</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Event Modal -->
+    <div id="modal-event" class="modal-overlay modal-hidden" onclick="if(event.target===this)closeCreateModal('event')">
+        <div class="modal">
+            <button type="button" class="modal-close" onclick="closeCreateModal('event')">&times;</button>
+            <h2>Create Event</h2>
+            <form method="post" action="{% url 'wishlist:create_event' %}" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="ev-title">Title</label>
+                    <input type="text" name="title" id="ev-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="ev-date">Date</label>
+                    <input type="date" name="date" id="ev-date" required>
+                </div>
+                <div class="form-group form-row">
+                    <div>
+                        <label for="ev-start">Start Time</label>
+                        <input type="time" name="start_time" id="ev-start" required>
+                    </div>
+                    <div>
+                        <label for="ev-end">End Time</label>
+                        <input type="time" name="end_time" id="ev-end" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="ev-address">Address</label>
+                    <input type="text" name="address" id="ev-address" placeholder="123 Main St, City, State" required>
+                </div>
+                <div class="form-group">
+                    <label for="ev-notes">Notes</label>
+                    <textarea name="notes" id="ev-notes" rows="2" placeholder="Notes (optional)"></textarea>
+                </div>
+                <button type="submit" class="btn-modal-submit">Create Event</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Activity Modal -->
+    <div id="modal-activity" class="modal-overlay modal-hidden" onclick="if(event.target===this)closeCreateModal('activity')">
+        <div class="modal">
+            <button type="button" class="modal-close" onclick="closeCreateModal('activity')">&times;</button>
+            <h2>Create Activity</h2>
+            <form method="post" action="{% url 'wishlist:create_activity' %}" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="act-title">Title</label>
+                    <input type="text" name="title" id="act-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="act-location">Location</label>
+                    <input type="text" name="location" id="act-location" placeholder="City, State" required>
+                </div>
+                <div class="form-group">
+                    <label for="act-notes">Notes</label>
+                    <textarea name="notes" id="act-notes" rows="2" placeholder="Notes (optional)"></textarea>
+                </div>
+                <button type="submit" class="btn-modal-submit">Create Activity</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <footer>
         <p>&copy; 2026 Wishlist App</p>
     </footer>
@@ -94,6 +229,39 @@
         } else {
             nav.style.display = "none";
             hamburger.classList.remove("active");
+        }
+    }
+
+    function toggleCreateMenu() {
+        var menu = document.getElementById("create-menu");
+        if (menu) {
+            menu.classList.toggle("create-menu-open");
+        }
+    }
+
+    document.addEventListener("click", function (e) {
+        var dropdown = document.querySelector(".create-dropdown");
+        var menu = document.getElementById("create-menu");
+        if (dropdown && menu && !dropdown.contains(e.target)) {
+            menu.classList.remove("create-menu-open");
+        }
+    });
+
+    function openCreateModal(type) {
+        var menu = document.getElementById("create-menu");
+        if (menu) menu.classList.remove("create-menu-open");
+        var modal = document.getElementById("modal-" + type);
+        if (modal) {
+            modal.classList.remove("modal-hidden");
+            modal.classList.add("modal-visible");
+        }
+    }
+
+    function closeCreateModal(type) {
+        var modal = document.getElementById("modal-" + type);
+        if (modal) {
+            modal.classList.remove("modal-visible");
+            modal.classList.add("modal-hidden");
         }
     }
     </script>

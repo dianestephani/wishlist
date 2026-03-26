@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block title %}{{ profile_user.first_name }} {{ profile_user.last_name }} - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:friends' %}" class="back-link">&larr; Back to Friends</a>
+</div>
+
+<div class="profile-card">
+    <div class="profile-header">
+        <div class="profile-avatar">{{ profile_user.first_name|make_list|first|default:"?" }}{{ profile_user.last_name|make_list|first|default:"" }}</div>
+        <div class="profile-name">
+            <h2>{{ profile_user.first_name }} {{ profile_user.last_name }}</h2>
+            <p class="profile-username">@{{ profile_user.username }}</p>
+        </div>
+    </div>
+
+    {% if is_friend %}
+        <p class="friend-badge-inline">You are friends</p>
+    {% endif %}
+</div>
+
+<!-- Public Wishlists -->
+<section class="public-section">
+    <h2 class="section-title">Wishlists</h2>
+    {% if public_wishlists %}
+        <div class="card-grid">
+            {% for wl in public_wishlists %}
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">{{ wl.name }}</h2>
+                        {% if wl.description %}
+                            <p class="card-sub">{{ wl.description }}</p>
+                        {% endif %}
+                        <p class="card-sub">{{ wl.items.count }} item{{ wl.items.count|pluralize }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">No public wishlists.</p>
+    {% endif %}
+</section>
+
+<!-- Public Events -->
+<section class="public-section">
+    <h2 class="section-title">Events</h2>
+    {% if public_events %}
+        <div class="card-grid">
+            {% timezone "America/Los_Angeles" %}
+            {% for event in public_events %}
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">{{ event.title }}</h2>
+                        <p class="card-date">{{ event.date|date:"l, M d, Y" }}</p>
+                        {% if event.start_time %}
+                            <p class="card-sub">{{ event.start_time|date:"g:i A" }}{% if event.end_time %} — {{ event.end_time|date:"g:i A" }}{% endif %}</p>
+                        {% endif %}
+                        {% if event.address %}
+                            <p class="card-sub">{{ event.address }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            {% endtimezone %}
+        </div>
+    {% else %}
+        <p class="empty-state">No public events.</p>
+    {% endif %}
+</section>
+
+<!-- Public Activities -->
+<section class="public-section">
+    <h2 class="section-title">Activities</h2>
+    {% if public_activities %}
+        <div class="card-grid">
+            {% for activity in public_activities %}
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">{{ activity.title }}</h2>
+                        {% if activity.location %}
+                            <p class="card-sub">{{ activity.location }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">No public activities.</p>
+    {% endif %}
+</section>
+{% endblock %}

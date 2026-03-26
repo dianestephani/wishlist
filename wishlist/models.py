@@ -12,24 +12,25 @@ class User(AbstractUser):
 
 
 class Wishlist(models.Model):
-    user = models.ForeignKey(
+    owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="wishlists",
     )
-    title = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.title
+        return self.name
 
 
 class Event(models.Model):
-    created_by = models.ForeignKey(
+    owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="events_created",
@@ -40,6 +41,7 @@ class Event(models.Model):
     end_time = models.TimeField(null=True, blank=True)
     address = models.CharField(max_length=500, blank=True)
     notes = models.TextField(blank=True)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -50,7 +52,7 @@ class Event(models.Model):
 
 
 class Activity(models.Model):
-    created_by = models.ForeignKey(
+    owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="activities_created",
@@ -58,6 +60,7 @@ class Activity(models.Model):
     title = models.CharField(max_length=255)
     location = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -77,6 +80,13 @@ class WishlistItem(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="wishlist_items",
+    )
+    wishlist = models.ForeignKey(
+        Wishlist,
+        on_delete=models.CASCADE,
+        related_name="items",
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=255)
     product_url = models.URLField(blank=True)
@@ -182,3 +192,24 @@ class StoreClick(models.Model):
 
     def __str__(self):
         return f"{self.user} clicked store for {self.item.title}"
+
+
+class Friendship(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="friendships",
+    )
+    friend = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="friended_by",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "friend")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user} → {self.friend}"

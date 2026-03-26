@@ -248,10 +248,10 @@ def friends(request):
 
 
 @login_required
-def public_profile(request, user_id):
+def public_profile(request, username):
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    profile_user = get_object_or_404(User, pk=user_id)
+    profile_user = get_object_or_404(User, username=username)
     is_friend = Friendship.objects.filter(user=request.user, friend=profile_user).exists()
     public_wishlists = Wishlist.objects.filter(owner=profile_user, is_public=True)
     public_events = Event.objects.filter(owner=profile_user, is_public=True)

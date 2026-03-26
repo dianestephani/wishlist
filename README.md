@@ -81,7 +81,7 @@ See `.env.example` for a template.
 - **Activities** — Track activities with title, location, notes. Full CRUD
 - **Friend system** — Friendship model (directional), auto-friend admin on registration
 - **Friends page** — Search bar for finding users, friend cards with avatars, links to public profiles
-- **Public profiles** — View a user's name/username with their public wishlists, events, and activities. No email or phone exposed
+- **Public profiles** — `/users/<username>/` shows name, avatar, and public wishlists/events/activities. No email or phone exposed
 - **Visibility system** — `is_public` boolean on Wishlists, Events, and Activities. Only public items shown on profiles. Defaults to public
 - **Mark as purchased** — Confirm with checkbox disclaimer and optional message
 - **Undo purchase** — "Just kidding!" reverts item to available
@@ -187,7 +187,7 @@ wishlist/
 | `/profile/edit/` | `edit_profile` | Edit profile (including username) |
 | `/profile/delete/` | `delete_account` | Delete account |
 | `/friends/` | `friends` | Friends page with search |
-| `/user/<id>/` | `public_profile` | Public user profile |
+| `/users/<username>/` | `public_profile` | Public user profile |
 | `/register/` | `register_view` | User registration |
 | `/login/` | `login_view` | User login |
 | `/logout/` | `logout_view` | User logout |

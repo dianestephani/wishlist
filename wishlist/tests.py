@@ -736,7 +736,7 @@ class DashboardViewTests(TestCase):
         Friendship.objects.create(user=self.user, friend=friend)
         response = self.client.get(self.url)
         self.assertContains(response, "Best Friend")
-        self.assertContains(response, reverse("wishlist:public_profile", args=[friend.pk]))
+        self.assertContains(response, reverse("wishlist:public_profile", args=[friend.username]))
 
     def test_does_not_show_non_friends(self):
         stranger = User.objects.create_user(
@@ -1802,7 +1802,7 @@ class FriendsViewTests(TestCase):
         Friendship.objects.create(user=self.user, friend=friend)
         response = self.client.get(self.url)
         self.assertContains(response, "Jane Doe")
-        self.assertContains(response, reverse("wishlist:public_profile", args=[friend.pk]))
+        self.assertContains(response, reverse("wishlist:public_profile", args=[friend.username]))
 
     def test_does_not_show_non_friends(self):
         User.objects.create_user(
@@ -1826,7 +1826,7 @@ class PublicProfileViewTests(TestCase):
             first_name="Jane", last_name="Doe", phone_number="555-9999",
         )
         self.client.login(username="testuser", password="pass123")
-        self.url = reverse("wishlist:public_profile", args=[self.friend.pk])
+        self.url = reverse("wishlist:public_profile", args=[self.friend.username])
 
     def test_requires_login(self):
         self.client.logout()
@@ -1862,7 +1862,7 @@ class PublicProfileViewTests(TestCase):
         self.assertContains(response, "profile-avatar")
 
     def test_nonexistent_user_returns_404(self):
-        url = reverse("wishlist:public_profile", args=[99999])
+        url = reverse("wishlist:public_profile", args=["nonexistent_user"])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 

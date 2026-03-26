@@ -93,7 +93,7 @@
         {% if friendships %}
             <div class="friends-row">
                 {% for friendship in friendships %}
-                    <a href="{% url 'wishlist:public_profile' friendship.friend.id %}" class="friend-chip">
+                    <a href="{% url 'wishlist:public_profile' friendship.friend.username %}" class="friend-chip">
                         <span class="friend-avatar">{{ friendship.friend.first_name|make_list|first|default:"?" }}{{ friendship.friend.last_name|make_list|first|default:"" }}</span>
                         <span class="friend-name">{{ friendship.friend.first_name }} {{ friendship.friend.last_name }}</span>
                     </a>

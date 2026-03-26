@@ -38,7 +38,7 @@ body {
 .bg-image {
     position: fixed;
     inset: 0;
-    background: url('../images/background.jpg') center/cover no-repeat;
+    background: url('../images/disco-ball.jpeg') center/cover no-repeat;
     filter: brightness(1.15);
     z-index: -2;
 }
@@ -240,7 +240,8 @@ footer {
 }
 
 .wishlist-header h1 {
-    color: var(--pink-light);
+    color: #fff;
+    text-shadow: 0 0 20px var(--pink-glow), 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .sort-form {

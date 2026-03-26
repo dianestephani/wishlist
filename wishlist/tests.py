@@ -689,6 +689,35 @@ class DashboardViewTests(TestCase):
         response = self.client.get(self.url)
         self.assertNotContains(response, "Not My List")
 
+    def test_welcome_shows_first_name(self):
+        self.user.first_name = "Diane"
+        self.user.save()
+        response = self.client.get(self.url)
+        self.assertContains(response, "Welcome, Diane")
+
+    def test_welcome_falls_back_to_username(self):
+        self.user.first_name = ""
+        self.user.save()
+        response = self.client.get(self.url)
+        self.assertContains(response, f"Welcome, {self.user.username}")
+
+    def test_does_not_show_other_users_events(self):
+        from datetime import date
+        other = User.objects.create_user(
+            username="other2", email="other2@example.com", password="pass123"
+        )
+        Event.objects.create(owner=other, title="Secret Party", date=date.today())
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Secret Party")
+
+    def test_does_not_show_other_users_activities(self):
+        other = User.objects.create_user(
+            username="other3", email="other3@example.com", password="pass123"
+        )
+        Activity.objects.create(owner=other, title="Private Hike")
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Private Hike")
+
     def test_cards_link_to_correct_pages(self):
         response = self.client.get(self.url)
         self.assertContains(response, reverse("wishlist:index"))

@@ -10,17 +10,20 @@
 </div>
 
 {% if events %}
-    <div class="dashboard-list">
+    <div class="card-grid">
         {% timezone "America/Los_Angeles" %}
         {% for event in events %}
-            <a href="{% url 'wishlist:event_detail' event.id %}" class="dashboard-list-item" style="text-decoration: none; color: inherit;">
-                <div class="dashboard-list-content">
-                    <span class="dashboard-list-title">{{ event.title }}</span>
+            <a href="{% url 'wishlist:event_detail' event.id %}" class="card card-clickable">
+                <div class="card-body">
+                    <h2 class="card-title">{{ event.title }}</h2>
+                    <p class="card-date">{{ event.date|date:"l, M d, Y" }}</p>
+                    {% if event.start_time %}
+                        <p class="card-sub">{{ event.start_time|date:"g:i A" }}{% if event.end_time %} — {{ event.end_time|date:"g:i A" }}{% endif %}</p>
+                    {% endif %}
                     {% if event.address %}
-                        <span class="dashboard-list-message">{{ event.address }}</span>
+                        <p class="card-sub">{{ event.address }}</p>
                     {% endif %}
                 </div>
-                <span class="dashboard-list-date">{{ event.date|date:"M d, Y" }}</span>
             </a>
         {% endfor %}
         {% endtimezone %}

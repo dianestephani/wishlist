@@ -37,7 +37,15 @@
                     {% for event in events %}
                         <li>
                             <a href="{% url 'wishlist:event_detail' event.id %}" class="dashboard-card-item-link">
-                                <span class="dashboard-card-item-title">{{ event.title }}</span>
+                                <div class="dashboard-card-item-details">
+                                    <span class="dashboard-card-item-title">{{ event.title }}</span>
+                                    {% if event.start_time %}
+                                        <span class="dashboard-card-item-sub">{{ event.start_time|date:"g:i A" }}{% if event.end_time %} — {{ event.end_time|date:"g:i A" }}{% endif %}</span>
+                                    {% endif %}
+                                    {% if event.address %}
+                                        <span class="dashboard-card-item-sub">{{ event.address }}</span>
+                                    {% endif %}
+                                </div>
                                 <span class="dashboard-card-item-date">{{ event.date|date:"M d, Y" }}</span>
                             </a>
                         </li>
@@ -58,7 +66,12 @@
                     {% for activity in activities %}
                         <li>
                             <a href="{% url 'wishlist:activities' %}" class="dashboard-card-item-link">
-                                <span class="dashboard-card-item-title">{{ activity.title }}</span>
+                                <div class="dashboard-card-item-details">
+                                    <span class="dashboard-card-item-title">{{ activity.title }}</span>
+                                    {% if activity.location %}
+                                        <span class="dashboard-card-item-sub">{{ activity.location }}</span>
+                                    {% endif %}
+                                </div>
                                 <span class="dashboard-card-item-date">{{ activity.created_at|date:"M d, Y" }}</span>
                             </a>
                         </li>

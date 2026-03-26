@@ -9,19 +9,18 @@
 </div>
 
 {% if activities %}
-    <div class="dashboard-list">
+    <div class="card-grid">
         {% for activity in activities %}
-            <div class="dashboard-list-item">
-                <div class="dashboard-list-content">
-                    <span class="dashboard-list-title">{{ activity.title }}</span>
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">{{ activity.title }}</h2>
                     {% if activity.location %}
-                        <span class="dashboard-list-message">{{ activity.location }}</span>
+                        <p class="card-sub">{{ activity.location }}</p>
                     {% endif %}
                     {% if activity.notes %}
-                        <span class="dashboard-list-message">{{ activity.notes }}</span>
+                        <p class="card-sub">{{ activity.notes }}</p>
                     {% endif %}
                 </div>
-                <span class="dashboard-list-date">{{ activity.created_at|date:"M d, Y" }}</span>
             </div>
         {% endfor %}
     </div>

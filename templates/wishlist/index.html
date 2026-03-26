@@ -1,8 +1,62 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Wishlist{% endblock %}
+{% block title %}My Wishlist{% endblock %}
 
 {% block content %}
-<h1>Welcome to Wishlist</h1>
-<p>Start building your wishlist today.</p>
+<div class="wishlist-header">
+    <h1>My Wishlist</h1>
+
+    <form method="get" class="sort-form">
+        <label for="sort">Sort by:</label>
+        <select name="sort" id="sort" onchange="this.form.submit()">
+            {% for value, label in sort_options %}
+                <option value="{{ value }}" {% if current_sort == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+{% if items %}
+    <div class="card-grid">
+        {% for item in items %}
+            <div class="card">
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.title }}" class="card-image">
+                {% else %}
+                    <div class="card-image card-image-placeholder">No Image</div>
+                {% endif %}
+
+                <div class="card-body">
+                    <h2 class="card-title">{{ item.title }}</h2>
+
+                    {% if item.price is not None %}
+                        <p class="card-price">${{ item.price }}</p>
+                    {% endif %}
+
+                    <div class="card-details">
+                        {% if item.category %}
+                            <span class="card-tag">{{ item.category }}</span>
+                        {% endif %}
+                        {% if item.brand %}
+                            <span class="card-tag">{{ item.brand }}</span>
+                        {% endif %}
+                        {% if item.store %}
+                            <span class="card-tag">{{ item.store }}</span>
+                        {% endif %}
+                    </div>
+
+                    {% if item.product_url %}
+                        <a href="{{ item.product_url }}" target="_blank" rel="noopener noreferrer" class="card-link">
+                            View Product
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-state">Your wishlist is empty. Start adding items!</p>
+{% endif %}
 {% endblock %}

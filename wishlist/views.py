@@ -4,11 +4,37 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import redirect, render
 
 from .forms import RegistrationForm
+from .models import WishlistItem
+
+SORT_OPTIONS = {
+    "price_asc": "price",
+    "price_desc": "-price",
+    "category": "category",
+    "brand": "brand",
+    "store": "store",
+}
 
 
 @login_required
 def index(request):
-    return render(request, "wishlist/index.html")
+    sort = request.GET.get("sort", "")
+    order_by = SORT_OPTIONS.get(sort, "-created_at")
+
+    items = WishlistItem.objects.filter(user=request.user).order_by(order_by)
+
+    context = {
+        "items": items,
+        "current_sort": sort,
+        "sort_options": [
+            ("", "Newest"),
+            ("price_asc", "Price: Low to High"),
+            ("price_desc", "Price: High to Low"),
+            ("category", "Category"),
+            ("brand", "Brand"),
+            ("store", "Store"),
+        ],
+    }
+    return render(request, "wishlist/index.html", context)
 
 
 def register_view(request):

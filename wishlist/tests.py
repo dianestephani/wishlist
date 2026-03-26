@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .forms import ActivityForm, EventForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
-from .models import Activity, Event, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
+from .models import Activity, Event, FriendRequest, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 User = get_user_model()
 
@@ -2224,3 +2224,242 @@ class NotificationsApiTests(TestCase):
         response = self.client.get(self.url)
         data = response.json()
         self.assertEqual(len(data["notifications"]), 20)
+
+
+# ---------------------------------------------------------------------------
+# FriendRequest model tests
+# ---------------------------------------------------------------------------
+class FriendRequestModelTests(TestCase):
+    def setUp(self):
+        self.user1 = User.objects.create_user(username="u1", email="u1@example.com", password="pass123")
+        self.user2 = User.objects.create_user(username="u2", email="u2@example.com", password="pass123")
+
+    def test_create_request(self):
+        fr = FriendRequest.objects.create(from_user=self.user1, to_user=self.user2)
+        self.assertEqual(fr.status, FriendRequest.Status.PENDING)
+        self.assertIn("u1", str(fr))
+        self.assertIn("u2", str(fr))
+
+    def test_duplicate_rejected(self):
+        FriendRequest.objects.create(from_user=self.user1, to_user=self.user2)
+        with self.assertRaises(Exception):
+            FriendRequest.objects.create(from_user=self.user1, to_user=self.user2)
+
+    def test_reverse_allowed(self):
+        FriendRequest.objects.create(from_user=self.user1, to_user=self.user2)
+        FriendRequest.objects.create(from_user=self.user2, to_user=self.user1)
+        self.assertEqual(FriendRequest.objects.count(), 2)
+
+
+# ---------------------------------------------------------------------------
+# Friend search tests
+# ---------------------------------------------------------------------------
+class FriendSearchTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.target = User.objects.create_user(
+            username="jane_doe", email="jane@example.com", password="pass123",
+            first_name="Jane", last_name="Doe", phone_number="555-1234",
+        )
+        self.client.login(username="testuser", password="pass123")
+
+    def test_search_by_username(self):
+        response = self.client.get(reverse("wishlist:friends") + "?q=jane_doe")
+        self.assertContains(response, "Jane Doe")
+
+    def test_search_by_email(self):
+        response = self.client.get(reverse("wishlist:friends") + "?q=jane@example")
+        self.assertContains(response, "Jane Doe")
+
+    def test_search_by_phone(self):
+        response = self.client.get(reverse("wishlist:friends") + "?q=555-1234")
+        self.assertContains(response, "Jane Doe")
+
+    def test_excludes_self(self):
+        response = self.client.get(reverse("wishlist:friends") + "?q=testuser")
+        self.assertContains(response, "No users found")
+
+    def test_no_results(self):
+        response = self.client.get(reverse("wishlist:friends") + "?q=nonexistent")
+        self.assertContains(response, "No users found")
+
+    def test_shows_add_friend_button(self):
+        response = self.client.get(reverse("wishlist:friends") + "?q=jane")
+        self.assertContains(response, "Add Friend")
+
+    def test_shows_already_friends_badge(self):
+        Friendship.objects.create(user=self.user, friend=self.target)
+        response = self.client.get(reverse("wishlist:friends") + "?q=jane")
+        self.assertContains(response, "Friends")
+        self.assertNotContains(response, "Add Friend")
+
+    def test_shows_pending_badge(self):
+        FriendRequest.objects.create(from_user=self.user, to_user=self.target)
+        response = self.client.get(reverse("wishlist:friends") + "?q=jane")
+        self.assertContains(response, "Pending")
+
+
+# ---------------------------------------------------------------------------
+# Send friend request tests
+# ---------------------------------------------------------------------------
+class SendFriendRequestTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.target = User.objects.create_user(
+            username="target", email="target@example.com", password="pass123",
+            first_name="Target",
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:send_friend_request", args=[self.target.pk])
+
+    def test_creates_pending_request(self):
+        response = self.client.get(self.url)
+        self.assertTrue(
+            FriendRequest.objects.filter(
+                from_user=self.user, to_user=self.target, status=FriendRequest.Status.PENDING
+            ).exists()
+        )
+
+    def test_redirects_to_friends(self):
+        response = self.client.get(self.url)
+        self.assertRedirects(response, reverse("wishlist:friends"))
+
+    def test_no_duplicate(self):
+        FriendRequest.objects.create(from_user=self.user, to_user=self.target)
+        response = self.client.get(self.url, follow=True)
+        self.assertEqual(FriendRequest.objects.filter(from_user=self.user, to_user=self.target).count(), 1)
+
+    def test_cannot_send_to_self(self):
+        url = reverse("wishlist:send_friend_request", args=[self.user.pk])
+        response = self.client.get(url, follow=True)
+        self.assertEqual(FriendRequest.objects.count(), 0)
+
+    def test_already_friends_skips(self):
+        Friendship.objects.create(user=self.user, friend=self.target)
+        response = self.client.get(self.url, follow=True)
+        self.assertEqual(FriendRequest.objects.count(), 0)
+
+
+# ---------------------------------------------------------------------------
+# Accept/deny friend request tests
+# ---------------------------------------------------------------------------
+class AcceptFriendRequestTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.requester = User.objects.create_user(
+            username="requester", email="req@example.com", password="pass123"
+        )
+        self.fr = FriendRequest.objects.create(from_user=self.requester, to_user=self.user)
+        self.client.login(username="testuser", password="pass123")
+
+    def test_accept_creates_mutual_friendship(self):
+        url = reverse("wishlist:accept_friend_request", args=[self.fr.pk])
+        self.client.get(url)
+        self.assertTrue(Friendship.objects.filter(user=self.user, friend=self.requester).exists())
+        self.assertTrue(Friendship.objects.filter(user=self.requester, friend=self.user).exists())
+
+    def test_accept_updates_status(self):
+        url = reverse("wishlist:accept_friend_request", args=[self.fr.pk])
+        self.client.get(url)
+        self.fr.refresh_from_db()
+        self.assertEqual(self.fr.status, FriendRequest.Status.ACCEPTED)
+
+    def test_accept_redirects(self):
+        url = reverse("wishlist:accept_friend_request", args=[self.fr.pk])
+        response = self.client.get(url)
+        self.assertRedirects(response, reverse("wishlist:friends"))
+
+    def test_cannot_accept_others_request(self):
+        other = User.objects.create_user(username="other", email="o@e.com", password="pass123")
+        self.client.login(username="other", password="pass123")
+        url = reverse("wishlist:accept_friend_request", args=[self.fr.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+class DenyFriendRequestTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.requester = User.objects.create_user(
+            username="requester", email="req@example.com", password="pass123"
+        )
+        self.fr = FriendRequest.objects.create(from_user=self.requester, to_user=self.user)
+        self.client.login(username="testuser", password="pass123")
+
+    def test_deny_deletes_request(self):
+        url = reverse("wishlist:deny_friend_request", args=[self.fr.pk])
+        self.client.get(url)
+        self.assertFalse(FriendRequest.objects.filter(pk=self.fr.pk).exists())
+
+    def test_deny_does_not_create_friendship(self):
+        url = reverse("wishlist:deny_friend_request", args=[self.fr.pk])
+        self.client.get(url)
+        self.assertEqual(Friendship.objects.count(), 0)
+
+    def test_deny_redirects(self):
+        url = reverse("wishlist:deny_friend_request", args=[self.fr.pk])
+        response = self.client.get(url)
+        self.assertRedirects(response, reverse("wishlist:friends"))
+
+    def test_cannot_deny_others_request(self):
+        other = User.objects.create_user(username="other", email="o@e.com", password="pass123")
+        self.client.login(username="other", password="pass123")
+        url = reverse("wishlist:deny_friend_request", args=[self.fr.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# Friend requests API tests
+# ---------------------------------------------------------------------------
+class FriendRequestsApiTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.requester = User.objects.create_user(
+            username="requester", email="req@example.com", password="pass123",
+            first_name="Jane",
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:friend_requests_api")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_returns_json(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["content-type"], "application/json")
+
+    def test_returns_pending_requests(self):
+        FriendRequest.objects.create(from_user=self.requester, to_user=self.user)
+        response = self.client.get(self.url)
+        data = response.json()
+        self.assertEqual(len(data["friend_requests"]), 1)
+        self.assertEqual(data["friend_requests"][0]["from_user"], "Jane")
+
+    def test_excludes_accepted_requests(self):
+        FriendRequest.objects.create(
+            from_user=self.requester, to_user=self.user, status=FriendRequest.Status.ACCEPTED
+        )
+        response = self.client.get(self.url)
+        data = response.json()
+        self.assertEqual(len(data["friend_requests"]), 0)
+
+    def test_excludes_requests_to_others(self):
+        other = User.objects.create_user(username="other", email="o@e.com", password="pass123")
+        FriendRequest.objects.create(from_user=self.requester, to_user=other)
+        response = self.client.get(self.url)
+        data = response.json()
+        self.assertEqual(len(data["friend_requests"]), 0)

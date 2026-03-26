@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .forms import ActivityForm, EventForm, ProfileForm, PurchaseForm, RegistrationForm, UndoPurchaseForm, WishlistForm, WishlistItemForm
 from django.http import JsonResponse
 
-from .models import Activity, Event, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
+from .models import Activity, Event, FriendRequest, Friendship, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
     "price_asc": "price",
@@ -266,7 +266,100 @@ def notifications_api(request):
 @login_required
 def friends(request):
     friendships = Friendship.objects.filter(user=request.user).select_related("friend")
-    return render(request, "wishlist/friends.html", {"friendships": friendships})
+    search_results = None
+    query = request.GET.get("q", "").strip()
+    if query:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        from django.db.models import Q
+        search_results = (
+            User.objects.filter(
+                Q(username__icontains=query) |
+                Q(email__icontains=query) |
+                Q(phone_number__icontains=query)
+            )
+            .exclude(pk=request.user.pk)[:20]
+        )
+        friend_ids = set(friendships.values_list("friend_id", flat=True))
+        pending_ids = set(
+            FriendRequest.objects.filter(from_user=request.user, status=FriendRequest.Status.PENDING)
+            .values_list("to_user_id", flat=True)
+        )
+        for user in search_results:
+            user.is_already_friend = user.pk in friend_ids
+            user.is_pending = user.pk in pending_ids
+
+    context = {
+        "friendships": friendships,
+        "search_results": search_results,
+        "query": query,
+    }
+    return render(request, "wishlist/friends.html", context)
+
+
+@login_required
+def send_friend_request(request, user_id):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    to_user = get_object_or_404(User, pk=user_id)
+
+    if to_user == request.user:
+        messages.error(request, "You can't send a friend request to yourself.")
+        return redirect("wishlist:friends")
+
+    if Friendship.objects.filter(user=request.user, friend=to_user).exists():
+        messages.info(request, f"You're already friends with {to_user.first_name or to_user.username}.")
+        return redirect("wishlist:friends")
+
+    _, created = FriendRequest.objects.get_or_create(
+        from_user=request.user, to_user=to_user,
+        defaults={"status": FriendRequest.Status.PENDING},
+    )
+    if created:
+        messages.success(request, f"Friend request sent to {to_user.first_name or to_user.username}!")
+    else:
+        messages.info(request, "Friend request already sent.")
+    return redirect("wishlist:friends")
+
+
+@login_required
+def accept_friend_request(request, request_id):
+    fr = get_object_or_404(FriendRequest, pk=request_id, to_user=request.user, status=FriendRequest.Status.PENDING)
+    fr.status = FriendRequest.Status.ACCEPTED
+    fr.save()
+    Friendship.objects.get_or_create(user=request.user, friend=fr.from_user)
+    Friendship.objects.get_or_create(user=fr.from_user, friend=request.user)
+    messages.success(request, f"You are now friends with {fr.from_user.first_name or fr.from_user.username}!")
+    return redirect("wishlist:friends")
+
+
+@login_required
+def deny_friend_request(request, request_id):
+    fr = get_object_or_404(FriendRequest, pk=request_id, to_user=request.user, status=FriendRequest.Status.PENDING)
+    fr.delete()
+    return redirect("wishlist:friends")
+
+
+@login_required
+def friend_requests_api(request):
+    pending = (
+        FriendRequest.objects.filter(to_user=request.user, status=FriendRequest.Status.PENDING)
+        .select_related("from_user")
+        .order_by("-created_at")[:20]
+    )
+    data = []
+    for fr in pending:
+        data.append({
+            "id": fr.pk,
+            "from_user": fr.from_user.first_name or fr.from_user.username,
+            "from_username": fr.from_user.username,
+            "from_first": fr.from_user.first_name,
+            "from_last": fr.from_user.last_name,
+            "created_at": fr.created_at.isoformat(),
+            "accept_url": f"/friends/request/{fr.pk}/accept/",
+            "deny_url": f"/friends/request/{fr.pk}/deny/",
+        })
+    return JsonResponse({"friend_requests": data})
 
 
 @login_required

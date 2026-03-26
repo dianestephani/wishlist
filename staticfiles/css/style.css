@@ -1406,13 +1406,32 @@ strong {
     font-weight: 600;
 }
 
+.notif-tabs {
+    display: flex;
+    gap: 0.4rem;
+}
+
 .notif-tab {
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--pink-light);
-    background: rgba(233, 30, 140, 0.12);
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0.2rem 0.6rem;
     border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+}
+
+.notif-tab.active {
+    color: var(--pink-light);
+    background: rgba(233, 30, 140, 0.12);
+    border-color: transparent;
+}
+
+.notif-tab:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .notif-list {
@@ -1476,6 +1495,92 @@ strong {
     color: var(--text-muted);
     white-space: nowrap;
     margin-top: 0.1rem;
+}
+
+.notif-friend-request {
+    flex-wrap: wrap;
+}
+
+.notif-friend-request .notif-item-content {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.notif-fr-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #5eead4;
+    color: #0f172a;
+    font-size: 0.65rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.notif-fr-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.btn-fr-accept {
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 0.25rem 0.65rem;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-fr-deny {
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 0.25rem 0.65rem;
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--red);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-add-friend {
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    font-weight: 500;
+    text-decoration: none;
+    text-align: center;
+    display: inline-block;
+}
+
+.friend-badge-small {
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #5eead4;
+    background: rgba(94, 234, 212, 0.12);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+}
+
+.friend-badge-small.pending {
+    color: var(--gold);
+    background: rgba(245, 158, 11, 0.12);
 }
 
 /* ===== Nav avatar ===== */

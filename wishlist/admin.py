@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Activity, Event, Friendship, ItemEvent, ItemView, Purchase, StoreClick, User, Wishlist, WishlistItem
+from .models import Activity, Event, FriendRequest, Friendship, ItemEvent, ItemView, Purchase, StoreClick, User, Wishlist, WishlistItem
 
 
 @admin.register(User)
@@ -114,4 +114,12 @@ class ActivityAdmin(admin.ModelAdmin):
 class FriendshipAdmin(admin.ModelAdmin):
     list_display = ("user", "friend", "created_at")
     search_fields = ("user__username", "user__email", "friend__username", "friend__email")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(FriendRequest)
+class FriendRequestAdmin(admin.ModelAdmin):
+    list_display = ("from_user", "to_user", "status", "created_at")
+    list_filter = ("status",)
+    search_fields = ("from_user__username", "to_user__username")
     readonly_fields = ("created_at",)

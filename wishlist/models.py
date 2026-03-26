@@ -212,4 +212,35 @@ class Friendship(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.user} → {self.friend}"
+        return f"{self.user} ↔ {self.friend}"
+
+
+class FriendRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACCEPTED = "accepted", "Accepted"
+        DENIED = "denied", "Denied"
+
+    from_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="sent_requests",
+    )
+    to_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="received_requests",
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("from_user", "to_user")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.from_user} → {self.to_user} ({self.status})"

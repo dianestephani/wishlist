@@ -10,10 +10,36 @@
 
 <div class="friends-search">
     <form method="get" class="friends-search-form">
-        <input type="text" name="q" placeholder="Search by username, email, or phone number" value="{{ request.GET.q|default:'' }}">
+        <input type="text" name="q" placeholder="Search by username, email, or phone number" value="{{ query }}">
         <button type="submit" class="btn-search">Search</button>
     </form>
 </div>
+
+{% if search_results is not None %}
+    <div class="friends-section">
+        <h2 class="section-title">Search Results</h2>
+        {% if search_results %}
+            <div class="friends-grid">
+                {% for result in search_results %}
+                    <div class="friend-card">
+                        <div class="friend-card-avatar">{{ result.first_name|make_list|first|default:"?" }}{{ result.last_name|make_list|first|default:"" }}</div>
+                        <span class="friend-card-name">{{ result.first_name }} {{ result.last_name }}</span>
+                        <span class="friend-card-username">@{{ result.username }}</span>
+                        {% if result.is_already_friend %}
+                            <span class="friend-badge-small">Friends</span>
+                        {% elif result.is_pending %}
+                            <span class="friend-badge-small pending">Pending</span>
+                        {% else %}
+                            <a href="{% url 'wishlist:send_friend_request' result.id %}" class="btn-add-friend">Add Friend</a>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No users found for "{{ query }}".</p>
+        {% endif %}
+    </div>
+{% endif %}
 
 <div class="friends-section">
     <h2 class="section-title">My Friends</h2>

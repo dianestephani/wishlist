@@ -51,9 +51,15 @@
                         <div id="notif-panel" class="notif-panel">
                             <div class="notif-header">
                                 <h3>Notifications</h3>
-                                <span class="notif-tab active">Wishlists</span>
+                                <div class="notif-tabs">
+                                    <button type="button" class="notif-tab active" id="tab-wishlists" onclick="switchNotifTab('wishlists')">Wishlists</button>
+                                    <button type="button" class="notif-tab" id="tab-friends" onclick="switchNotifTab('friends')">Friends</button>
+                                </div>
                             </div>
-                            <div id="notif-list" class="notif-list">
+                            <div id="notif-list-wishlists" class="notif-list">
+                                <p class="notif-empty">Loading...</p>
+                            </div>
+                            <div id="notif-list-friends" class="notif-list" style="display: none;">
                                 <p class="notif-empty">Loading...</p>
                             </div>
                         </div>
@@ -279,19 +285,32 @@
         }
     }
 
-    var notifLoaded = false;
+    var notifWishlistsLoaded = false;
+    var notifFriendsLoaded = false;
+
     function toggleNotifications() {
         var panel = document.getElementById("notif-panel");
         if (!panel) return;
         panel.classList.toggle("notif-panel-open");
-        if (!notifLoaded) {
-            fetchNotifications();
-            notifLoaded = true;
+        if (!notifWishlistsLoaded) {
+            fetchWishlistNotifications();
+            notifWishlistsLoaded = true;
         }
     }
 
-    function fetchNotifications() {
-        var list = document.getElementById("notif-list");
+    function switchNotifTab(tab) {
+        document.getElementById("tab-wishlists").classList.toggle("active", tab === "wishlists");
+        document.getElementById("tab-friends").classList.toggle("active", tab === "friends");
+        document.getElementById("notif-list-wishlists").style.display = tab === "wishlists" ? "block" : "none";
+        document.getElementById("notif-list-friends").style.display = tab === "friends" ? "block" : "none";
+        if (tab === "friends" && !notifFriendsLoaded) {
+            fetchFriendRequests();
+            notifFriendsLoaded = true;
+        }
+    }
+
+    function fetchWishlistNotifications() {
+        var list = document.getElementById("notif-list-wishlists");
         fetch("{% url 'wishlist:notifications_api' %}")
             .then(function(r) { return r.json(); })
             .then(function(data) {
@@ -311,6 +330,39 @@
                     html += '</div>';
                     html += '<span class="notif-item-time">' + time + '</span>';
                     html += '</a>';
+                });
+                list.innerHTML = html;
+            })
+            .catch(function() {
+                list.innerHTML = '<p class="notif-empty">Failed to load.</p>';
+            });
+    }
+
+    function fetchFriendRequests() {
+        var list = document.getElementById("notif-list-friends");
+        fetch("{% url 'wishlist:friend_requests_api' %}")
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.friend_requests.length) {
+                    list.innerHTML = '<p class="notif-empty">No friend requests.</p>';
+                    return;
+                }
+                var html = "";
+                data.friend_requests.forEach(function(fr) {
+                    var initials = (fr.from_first ? fr.from_first[0] : "?") + (fr.from_last ? fr.from_last[0] : "");
+                    html += '<div class="notif-item notif-friend-request">';
+                    html += '<div class="notif-item-content">';
+                    html += '<span class="notif-fr-avatar">' + initials + '</span>';
+                    html += '<div>';
+                    html += '<span class="notif-item-title">' + fr.from_user + '</span>';
+                    html += '<span class="notif-item-action">wants to be your friend</span>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '<div class="notif-fr-actions">';
+                    html += '<a href="' + fr.accept_url + '" class="btn-fr-accept">Accept</a>';
+                    html += '<a href="' + fr.deny_url + '" class="btn-fr-deny">Deny</a>';
+                    html += '</div>';
+                    html += '</div>';
                 });
                 list.innerHTML = html;
             })

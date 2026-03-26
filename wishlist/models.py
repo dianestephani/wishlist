@@ -11,6 +11,42 @@ class User(AbstractUser):
         return self.email
 
 
+class Wishlist(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="wishlists",
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
+class Event(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="events_created",
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    date = models.DateTimeField()
+    location = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date"]
+
+    def __str__(self):
+        return self.title
+
+
 class WishlistItem(models.Model):
     class Status(models.TextChoices):
         AVAILABLE = "available", "Available"

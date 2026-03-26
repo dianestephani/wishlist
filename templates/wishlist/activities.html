@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block title %}Activities - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+    <h1 class="page-title">Activities</h1>
+</div>
+
+{% if purchases %}
+    <div class="dashboard-list">
+        {% timezone "America/Los_Angeles" %}
+        {% for purchase in purchases %}
+            <div class="dashboard-list-item">
+                <div class="dashboard-list-content">
+                    <span class="dashboard-list-title">{{ purchase.item.title }}</span>
+                    {% if purchase.message %}
+                        <span class="dashboard-list-message">"{{ purchase.message }}"</span>
+                    {% endif %}
+                </div>
+                <span class="dashboard-list-date">{{ purchase.purchased_at|date:"M d, Y g:i A" }}</span>
+            </div>
+        {% endfor %}
+        {% endtimezone %}
+    </div>
+{% else %}
+    <p class="empty-state">No activities yet.</p>
+{% endif %}
+{% endblock %}

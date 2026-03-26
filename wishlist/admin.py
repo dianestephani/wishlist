@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import ItemEvent, ItemView, Purchase, StoreClick, User, WishlistItem
+from .models import Event, ItemEvent, ItemView, Purchase, StoreClick, User, Wishlist, WishlistItem
 
 
 @admin.register(User)
@@ -84,3 +84,18 @@ class StoreClickAdmin(admin.ModelAdmin):
     list_display = ("item", "user", "created_at")
     list_filter = ("created_at",)
     readonly_fields = ("item", "user", "created_at")
+
+
+@admin.register(Wishlist)
+class WishlistAdmin(admin.ModelAdmin):
+    list_display = ("title", "user", "created_at")
+    search_fields = ("title",)
+    readonly_fields = ("created_at",)
+
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ("title", "user", "date", "location", "created_at")
+    list_filter = ("date",)
+    search_fields = ("title", "location")
+    readonly_fields = ("created_at",)

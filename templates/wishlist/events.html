@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block title %}Events - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+    <h1 class="page-title">Events</h1>
+</div>
+
+{% if events %}
+    <div class="dashboard-list">
+        {% timezone "America/Los_Angeles" %}
+        {% for event in events %}
+            <div class="dashboard-list-item">
+                <div class="dashboard-list-content">
+                    <span class="dashboard-list-title">{{ event.title }}</span>
+                    {% if event.description %}
+                        <span class="dashboard-list-message">{{ event.description }}</span>
+                    {% endif %}
+                    {% if event.location %}
+                        <span class="dashboard-list-message">{{ event.location }}</span>
+                    {% endif %}
+                </div>
+                <span class="dashboard-list-date">{{ event.date|date:"M d, Y g:i A" }}</span>
+            </div>
+        {% endfor %}
+        {% endtimezone %}
+    </div>
+{% else %}
+    <p class="empty-state">No events yet.</p>
+{% endif %}
+{% endblock %}

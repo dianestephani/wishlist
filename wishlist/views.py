@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .email import send_purchased_email, send_undo_email
 from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
-from .models import ItemEvent, ItemView, Purchase, StoreClick, WishlistItem
+from .models import Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 SORT_OPTIONS = {
     "price_asc": "price",
@@ -19,16 +19,28 @@ SORT_OPTIONS = {
 
 @login_required
 def dashboard(request):
-    wishlist_items = WishlistItem.objects.filter(user=request.user).select_related("purchase")[:6]
-    recent_events = ItemEvent.objects.filter(user=request.user).select_related("item")[:5]
+    wishlists = Wishlist.objects.filter(user=request.user)[:5]
+    events = Event.objects.filter(user=request.user)[:5]
     recent_purchases = Purchase.objects.filter(purchased_by=request.user).select_related("item")[:5]
 
     context = {
-        "wishlist_items": wishlist_items,
-        "recent_events": recent_events,
+        "wishlists": wishlists,
+        "events": events,
         "recent_purchases": recent_purchases,
     }
     return render(request, "wishlist/dashboard.html", context)
+
+
+@login_required
+def events_list(request):
+    events = Event.objects.filter(user=request.user)
+    return render(request, "wishlist/events.html", {"events": events})
+
+
+@login_required
+def activities_list(request):
+    purchases = Purchase.objects.filter(purchased_by=request.user).select_related("item")
+    return render(request, "wishlist/activities.html", {"purchases": purchases})
 
 
 @login_required

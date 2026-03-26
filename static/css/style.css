@@ -770,31 +770,84 @@ strong {
     margin-bottom: 1.5rem;
 }
 
-.dashboard-section {
-    margin-bottom: 2rem;
+.dashboard-cards {
+    display: flex;
+    gap: 1.25rem;
 }
 
-.section-header {
+.dashboard-card {
+    flex: 1;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-shadow);
+    padding: 1.5rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(233, 30, 140, 0.15);
+}
+
+.dashboard-card h2 {
+    color: var(--pink-light);
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-card-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    flex: 1;
+}
+
+.dashboard-card-list li {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
 }
 
-.section-header h2 {
-    color: var(--pink-light);
-    font-size: 1.15rem;
-}
-
-.section-link {
-    font-size: 0.85rem;
+.dashboard-card-item-title {
+    font-size: 0.88rem;
     font-weight: 500;
-    text-decoration: none;
-    color: var(--pink-light);
+    color: var(--text);
 }
 
-.section-link:hover {
-    text-decoration: underline;
+.dashboard-card-item-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.dashboard-card-empty {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===== Page header (sub-pages) ===== */
+.page-header {
+    margin-bottom: 1.5rem;
+}
+
+.page-title {
+    color: #fff;
+    text-shadow: 0 0 20px var(--pink-glow), 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-list {
@@ -996,7 +1049,19 @@ strong {
         font-size: 1.3rem;
     }
 
+    .dashboard-cards {
+        flex-direction: column;
+    }
+
+    .dashboard-card {
+        min-height: auto;
+    }
+
     .dashboard-list-item {
         padding: 0.75rem 1rem;
+    }
+
+    .page-title {
+        font-size: 1.3rem;
     }
 }

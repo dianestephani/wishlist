@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from .email import send_purchased_email, send_undo_email
 from .forms import PurchaseForm, RegistrationForm, UndoPurchaseForm
-from .models import ItemEvent, ItemView, Purchase, StoreClick, WishlistItem
+from .models import Event, ItemEvent, ItemView, Purchase, StoreClick, Wishlist, WishlistItem
 
 User = get_user_model()
 
@@ -455,35 +455,28 @@ class DashboardViewTests(TestCase):
         response = self.client.get(self.url)
         self.assertContains(response, "Welcome")
 
-    def test_shows_wishlists_section(self):
+    def test_shows_three_sections(self):
         response = self.client.get(self.url)
         self.assertContains(response, "Wishlists")
-
-    def test_shows_events_section(self):
-        response = self.client.get(self.url)
         self.assertContains(response, "Events")
-
-    def test_shows_activities_section(self):
-        response = self.client.get(self.url)
         self.assertContains(response, "Activities")
 
-    def test_shows_wishlist_items(self):
-        WishlistItem.objects.create(user=self.user, title="Dashboard Item")
+    def test_shows_wishlist_title_and_date(self):
+        wl = Wishlist.objects.create(user=self.user, title="My Birthday List")
         response = self.client.get(self.url)
-        self.assertContains(response, "Dashboard Item")
+        self.assertContains(response, "My Birthday List")
 
-    def test_shows_empty_state_when_no_items(self):
+    def test_shows_empty_wishlists(self):
         response = self.client.get(self.url)
-        self.assertContains(response, "No items yet")
+        self.assertContains(response, "No wishlists yet")
 
-    def test_shows_recent_events(self):
-        item = WishlistItem.objects.create(user=self.user, title="Event Item")
-        ItemEvent.objects.create(
-            item=item, event_type=ItemEvent.EventType.PURCHASED, user=self.user
+    def test_shows_event_title_and_date(self):
+        from django.utils import timezone
+        Event.objects.create(
+            user=self.user, title="Birthday Party", date=timezone.now()
         )
         response = self.client.get(self.url)
-        self.assertContains(response, "Event Item")
-        self.assertContains(response, "Marked as Purchased")
+        self.assertContains(response, "Birthday Party")
 
     def test_shows_empty_events(self):
         response = self.client.get(self.url)
@@ -491,27 +484,109 @@ class DashboardViewTests(TestCase):
 
     def test_shows_recent_purchases(self):
         item = WishlistItem.objects.create(user=self.user, title="Bought Item")
-        Purchase.objects.create(item=item, purchased_by=self.user, message="Great find")
+        Purchase.objects.create(item=item, purchased_by=self.user)
         response = self.client.get(self.url)
         self.assertContains(response, "Bought Item")
-        self.assertContains(response, "Great find")
 
     def test_shows_empty_activities(self):
         response = self.client.get(self.url)
         self.assertContains(response, "No activities yet")
 
-    def test_does_not_show_other_users_items(self):
+    def test_does_not_show_other_users_wishlists(self):
         other = User.objects.create_user(
             username="other", email="other@example.com", password="pass123"
         )
-        WishlistItem.objects.create(user=other, title="Not My Item")
+        Wishlist.objects.create(user=other, title="Not My List")
         response = self.client.get(self.url)
-        self.assertNotContains(response, "Not My Item")
+        self.assertNotContains(response, "Not My List")
 
-    def test_has_view_all_link(self):
+    def test_cards_link_to_correct_pages(self):
         response = self.client.get(self.url)
         self.assertContains(response, reverse("wishlist:index"))
-        self.assertContains(response, "View All")
+        self.assertContains(response, reverse("wishlist:events"))
+        self.assertContains(response, reverse("wishlist:activities"))
+
+
+# ---------------------------------------------------------------------------
+# Events list view tests
+# ---------------------------------------------------------------------------
+class EventsListViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:events")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_renders_events_template(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/events.html")
+
+    def test_shows_user_events(self):
+        from django.utils import timezone
+        Event.objects.create(user=self.user, title="My Party", date=timezone.now())
+        response = self.client.get(self.url)
+        self.assertContains(response, "My Party")
+
+    def test_does_not_show_other_users_events(self):
+        from django.utils import timezone
+        other = User.objects.create_user(
+            username="other", email="other@example.com", password="pass123"
+        )
+        Event.objects.create(user=other, title="Not My Party", date=timezone.now())
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Not My Party")
+
+    def test_shows_empty_state(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No events yet")
+
+    def test_has_back_link(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, reverse("wishlist:dashboard"))
+
+
+# ---------------------------------------------------------------------------
+# Activities list view tests
+# ---------------------------------------------------------------------------
+class ActivitiesListViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:activities")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_renders_activities_template(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/activities.html")
+
+    def test_shows_user_purchases(self):
+        item = WishlistItem.objects.create(user=self.user, title="Purchased Thing")
+        Purchase.objects.create(item=item, purchased_by=self.user, message="Got it")
+        response = self.client.get(self.url)
+        self.assertContains(response, "Purchased Thing")
+        self.assertContains(response, "Got it")
+
+    def test_shows_empty_state(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No activities yet")
+
+    def test_has_back_link(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, reverse("wishlist:dashboard"))
 
 
 # ---------------------------------------------------------------------------

@@ -189,3 +189,24 @@ class StoreClick(models.Model):
 
     def __str__(self):
         return f"{self.user} clicked store for {self.item.title}"
+
+
+class Friendship(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="friendships",
+    )
+    friend = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="friended_by",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "friend")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user} → {self.friend}"

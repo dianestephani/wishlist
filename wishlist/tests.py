@@ -1414,21 +1414,24 @@ class OGMetaTagTests(TestCase):
         response = self.client.get(reverse("wishlist:index"))
         content = response.content.decode()
         self.assertIn('og:title', content)
+        self.assertIn('Wishlist App', content)
         self.assertIn('og:description', content)
+        self.assertIn('social platform', content)
         self.assertIn('og:image', content)
+        self.assertIn('disco-ball.jpeg', content)
         self.assertIn('twitter:card', content)
 
     def test_login_page_has_og_tags(self):
         response = self.client.get(reverse("wishlist:login"))
         content = response.content.decode()
-        self.assertIn('og:title', content)
-        self.assertIn('og:image', content)
+        self.assertIn('Wishlist App', content)
+        self.assertIn('disco-ball.jpeg', content)
 
     def test_register_page_has_og_tags(self):
         response = self.client.get(reverse("wishlist:register"))
         content = response.content.decode()
-        self.assertIn('og:title', content)
-        self.assertIn('og:image', content)
+        self.assertIn('Wishlist App', content)
+        self.assertIn('disco-ball.jpeg', content)
 
 
 # ---------------------------------------------------------------------------

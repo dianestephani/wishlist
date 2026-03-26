@@ -842,6 +842,7 @@ class CreateEventViewTests(TestCase):
         event = Event.objects.first()
         self.assertEqual(event.title, "My Party")
         self.assertEqual(event.created_by, self.user)
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
 
     def test_invalid_times_rejected(self):
         response = self.client.post(self.url, {
@@ -892,6 +893,7 @@ class CreateActivityViewTests(TestCase):
         activity = Activity.objects.first()
         self.assertEqual(activity.title, "Beach Day")
         self.assertEqual(activity.created_by, self.user)
+        self.assertRedirects(response, reverse("wishlist:dashboard"))
 
     def test_missing_location_rejected(self):
         response = self.client.post(self.url, {"title": "Hiking"})

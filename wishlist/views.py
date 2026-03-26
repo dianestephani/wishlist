@@ -61,7 +61,7 @@ def create_event(request):
             event.created_by = request.user
             event.save()
             messages.success(request, f'Event "{event.title}" created!')
-            return redirect("wishlist:event_detail", event_id=event.pk)
+            return redirect("wishlist:dashboard")
     else:
         form = EventForm()
     return render(request, "wishlist/create_event.html", {"form": form})
@@ -76,7 +76,7 @@ def create_activity(request):
             activity.created_by = request.user
             activity.save()
             messages.success(request, f'Activity "{activity.title}" created!')
-            return redirect("wishlist:activities")
+            return redirect("wishlist:dashboard")
     else:
         form = ActivityForm()
     return render(request, "wishlist/create_activity.html", {"form": form})

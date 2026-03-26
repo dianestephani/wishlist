@@ -19,6 +19,7 @@ class Wishlist(models.Model):
     )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -40,6 +41,7 @@ class Event(models.Model):
     end_time = models.TimeField(null=True, blank=True)
     address = models.CharField(max_length=500, blank=True)
     notes = models.TextField(blank=True)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -58,6 +60,7 @@ class Activity(models.Model):
     title = models.CharField(max_length=255)
     location = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

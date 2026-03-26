@@ -60,7 +60,7 @@ class ProfileForm(forms.ModelForm):
 class WishlistForm(forms.ModelForm):
     class Meta:
         model = Wishlist
-        fields = ["name", "description"]
+        fields = ["name", "description", "is_public"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3, "placeholder": "Description (optional)"}),
         }
@@ -91,7 +91,7 @@ class WishlistItemForm(forms.ModelForm):
 class EventForm(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ["title", "date", "start_time", "end_time", "address", "notes"]
+        fields = ["title", "date", "start_time", "end_time", "address", "notes", "is_public"]
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
             "start_time": forms.TimeInput(attrs={"type": "time"}),
@@ -121,7 +121,7 @@ class EventForm(forms.ModelForm):
 class ActivityForm(forms.ModelForm):
     class Meta:
         model = Activity
-        fields = ["title", "location", "notes"]
+        fields = ["title", "location", "notes", "is_public"]
         widgets = {
             "location": forms.TextInput(attrs={"placeholder": "City, State"}),
             "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Notes (optional)"}),

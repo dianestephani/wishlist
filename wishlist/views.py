@@ -253,9 +253,15 @@ def public_profile(request, user_id):
     User = get_user_model()
     profile_user = get_object_or_404(User, pk=user_id)
     is_friend = Friendship.objects.filter(user=request.user, friend=profile_user).exists()
+    public_wishlists = Wishlist.objects.filter(owner=profile_user, is_public=True)
+    public_events = Event.objects.filter(owner=profile_user, is_public=True)
+    public_activities = Activity.objects.filter(owner=profile_user, is_public=True)
     context = {
         "profile_user": profile_user,
         "is_friend": is_friend,
+        "public_wishlists": public_wishlists,
+        "public_events": public_events,
+        "public_activities": public_activities,
     }
     return render(request, "wishlist/public_profile.html", context)
 

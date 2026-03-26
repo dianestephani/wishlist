@@ -88,22 +88,24 @@ class StoreClickAdmin(admin.ModelAdmin):
 
 @admin.register(Wishlist)
 class WishlistAdmin(admin.ModelAdmin):
-    list_display = ("name", "owner", "created_at")
+    list_display = ("name", "owner", "is_public", "created_at")
+    list_filter = ("is_public",)
     search_fields = ("name",)
     readonly_fields = ("created_at",)
 
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("title", "owner", "date", "start_time", "end_time", "address", "created_at")
-    list_filter = ("date",)
+    list_display = ("title", "owner", "date", "start_time", "end_time", "address", "is_public", "created_at")
+    list_filter = ("date", "is_public")
     search_fields = ("title", "address")
     readonly_fields = ("created_at",)
 
 
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
-    list_display = ("title", "owner", "location", "created_at")
+    list_display = ("title", "owner", "location", "is_public", "created_at")
+    list_filter = ("is_public",)
     search_fields = ("title", "location")
     readonly_fields = ("created_at",)
 

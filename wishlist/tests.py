@@ -1839,7 +1839,14 @@ class PublicProfileViewTests(TestCase):
         self.assertTemplateUsed(response, "wishlist/public_profile.html")
         self.assertContains(response, "Jane Doe")
         self.assertContains(response, "@buddy")
-        self.assertContains(response, "buddy@example.com")
+
+    def test_does_not_expose_email(self):
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "buddy@example.com")
+
+    def test_does_not_expose_phone(self):
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "555-9999")
 
     def test_shows_friend_badge_if_friends(self):
         Friendship.objects.create(user=self.user, friend=self.friend)
@@ -1858,6 +1865,44 @@ class PublicProfileViewTests(TestCase):
         url = reverse("wishlist:public_profile", args=[99999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+    def test_shows_public_wishlists(self):
+        Wishlist.objects.create(owner=self.friend, name="Public List", is_public=True)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Public List")
+
+    def test_hides_private_wishlists(self):
+        Wishlist.objects.create(owner=self.friend, name="Secret List", is_public=False)
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Secret List")
+
+    def test_shows_public_events(self):
+        from datetime import date
+        Event.objects.create(owner=self.friend, title="Public Party", date=date.today(), is_public=True)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Public Party")
+
+    def test_hides_private_events(self):
+        from datetime import date
+        Event.objects.create(owner=self.friend, title="Secret Party", date=date.today(), is_public=False)
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Secret Party")
+
+    def test_shows_public_activities(self):
+        Activity.objects.create(owner=self.friend, title="Public Hike", is_public=True)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Public Hike")
+
+    def test_hides_private_activities(self):
+        Activity.objects.create(owner=self.friend, title="Secret Hike", is_public=False)
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Secret Hike")
+
+    def test_shows_empty_sections(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No public wishlists")
+        self.assertContains(response, "No public events")
+        self.assertContains(response, "No public activities")
 
 
 # ---------------------------------------------------------------------------

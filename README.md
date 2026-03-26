@@ -81,7 +81,8 @@ See `.env.example` for a template.
 - **Activities** — Track activities with title, location, notes. Full CRUD
 - **Friend system** — Friendship model (directional), auto-friend admin on registration
 - **Friends page** — Search bar for finding users, friend cards with avatars, links to public profiles
-- **Public profiles** — View any user's profile (name, email, phone, member since) with "You are friends" badge
+- **Public profiles** — View a user's name/username with their public wishlists, events, and activities. No email or phone exposed
+- **Visibility system** — `is_public` boolean on Wishlists, Events, and Activities. Only public items shown on profiles. Defaults to public
 - **Mark as purchased** — Confirm with checkbox disclaimer and optional message
 - **Undo purchase** — "Just kidding!" reverts item to available
 - **Email notifications** — Resend API emails on purchase/undo with user contact info
@@ -232,7 +233,7 @@ python manage.py test --verbosity=2
 
 ### Test coverage
 
-252 tests in `wishlist/tests.py` covering:
+261 tests in `wishlist/tests.py` covering:
 
 | Area | What's tested |
 | --- | --- |
@@ -242,7 +243,7 @@ python manage.py test --verbosity=2
 | **Dashboard** | Login required, personalized welcome (first name / username fallback), 3 sections + friends row, data display, empty states, user isolation for wishlists/events/activities/friends, card links |
 | **Profile** | View profile, edit (username change, email uniqueness), delete account with cascade |
 | **Friends** | Page renders, search input, empty state, shows friend list, hides non-friends |
-| **Public profiles** | Login required, displays user info, avatar, friend badge when friends, no badge when not, 404 for invalid user |
+| **Public profiles** | Login required, displays name/username (no email/phone), avatar, friend badge, public wishlists/events/activities shown, private items hidden, empty states, 404 |
 | **CRUD views** | Create/edit/delete for wishlists, items, events, activities — login required, form display, success, validation, messages, user isolation (404 for other users) |
 | **Wishlists index** | Shows user's wishlists, item counts, action buttons, links to detail, empty state, isolation |
 | **Item detail** | Displays info, OG meta tags, purchase/undo buttons, edit/delete, view counter, superuser-only logs |

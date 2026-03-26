@@ -1438,6 +1438,17 @@ strong {
     color: var(--pink-light);
 }
 
+/* ===== Public profile sections ===== */
+.public-section {
+    margin-top: 1.5rem;
+}
+
+.public-section .section-title {
+    color: var(--pink-light);
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
 /* ===== Dashboard friends ===== */
 .dashboard-friends {
     margin-top: 1.5rem;

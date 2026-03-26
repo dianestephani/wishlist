@@ -74,12 +74,12 @@ See `.env.example` for a template.
 - **Items** — Mark as purchased with disclaimer checkbox, undo with "Just kidding!", tracked store clicks
 
 ### Social
-- **Friend system** — Search by username/email/phone, send friend requests, accept/deny via notifications. Mutual friendships
+- **Friend system** — Search by username/email/phone, send friend requests, accept/deny via notifications. Mutual friendships. Remove friends (deletes both directions)
 - **Direct messaging** — Threaded conversations between friends with subject + content. Only friends can message
 - **Activity feed** — Notification system for wishlist actions (purchase/undo). Reply button opens conversation with prefilled subject
 - **Notifications panel** — 3 tabs (Messages, Activity, Friends) with real-time AJAX loading
-- **Public profiles** — `/users/<username>/` shows name, avatar, and public content. Friends see wishlists/events/activities; non-friends see "Add Friend"
-- **Visibility system** — `is_public` toggle on wishlists, events, and activities
+- **Public profiles** — `/users/<username>/` shows name and avatar. Friends see all wishlists/events/activities; non-friends see "Add Friend"
+- **Visibility system** — `is_public` toggle on wishlists, events, and activities (friends see all content regardless)
 
 ### Profile & Auth
 - **User profiles** — View/edit profile (username, name, email, phone), delete account with cascade
@@ -154,6 +154,7 @@ See `.env.example` for a template.
 | `/friends/add/<id>/` | `send_friend_request` | Send friend request |
 | `/friends/request/<id>/accept/` | `accept_friend_request` | Accept request |
 | `/friends/request/<id>/deny/` | `deny_friend_request` | Deny request |
+| `/friends/remove/<id>/` | `remove_friend` | Remove friend (both directions) |
 | `/users/<username>/` | `public_profile` | Public user profile |
 | `/api/notifications/` | `notifications_api` | Item activity JSON |
 | `/api/activity/` | `activity_feed_api` | Notification feed JSON |
@@ -166,7 +167,7 @@ See `.env.example` for a template.
 
 ## Testing
 
-327 tests in `wishlist/tests.py` using Django's built-in test framework.
+329 tests in `wishlist/tests.py` using Django's built-in test framework.
 
 ```bash
 python manage.py test                    # full suite
@@ -186,6 +187,7 @@ python manage.py test --verbosity=2      # verbose
 | **Public profiles** | Friends see public content, non-friends see restricted view + Add Friend, pending badge, no email/phone exposed |
 | **Friends** | Search (username/email/phone), add friend button, already-friends badge, pending badge, empty state |
 | **Friend requests** | Send, accept (mutual friendship), deny (deletes), can't accept others', can't self-add |
+| **Remove friend** | Removes both directions, redirects, success message, login required, 404 for invalid user |
 | **Messaging** | Inbox (conversations, unread), conversation (thread, reply, marks read, non-participant 404), start conversation (friends only, prefill subject) |
 | **Activity feed** | Shows notifications, reply button, empty state, user isolation |
 | **Purchase integration** | Purchase creates notification, creates message only with custom text, undo same logic, self-purchase no notification |

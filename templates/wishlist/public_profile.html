@@ -21,6 +21,7 @@
         <p class="friend-badge-inline">You are friends</p>
         <div class="detail-actions">
             <a href="{% url 'wishlist:start_conversation' profile_user.id %}" class="btn-edit">Message</a>
+            <a href="{% url 'wishlist:remove_friend' profile_user.id %}" class="btn-delete">Remove Friend</a>
         </div>
     {% elif not is_self %}
         {% if has_pending_request %}
@@ -34,12 +35,12 @@
 </div>
 
 {% if is_self or is_friend %}
-    <!-- Public Wishlists -->
+    <!-- Wishlists -->
     <section class="public-section">
         <h2 class="section-title">Wishlists</h2>
-        {% if public_wishlists %}
+        {% if wishlists %}
             <div class="card-grid">
-                {% for wl in public_wishlists %}
+                {% for wl in wishlists %}
                     <div class="card">
                         <div class="card-body">
                             <h2 class="card-title">{{ wl.name }}</h2>
@@ -52,17 +53,17 @@
                 {% endfor %}
             </div>
         {% else %}
-            <p class="empty-state">No public wishlists.</p>
+            <p class="empty-state">No wishlists yet.</p>
         {% endif %}
     </section>
 
-    <!-- Public Events -->
+    <!-- Events -->
     <section class="public-section">
         <h2 class="section-title">Events</h2>
-        {% if public_events %}
+        {% if events %}
             <div class="card-grid">
                 {% timezone "America/Los_Angeles" %}
-                {% for event in public_events %}
+                {% for event in events %}
                     <div class="card">
                         <div class="card-body">
                             <h2 class="card-title">{{ event.title }}</h2>
@@ -79,16 +80,16 @@
                 {% endtimezone %}
             </div>
         {% else %}
-            <p class="empty-state">No public events.</p>
+            <p class="empty-state">No events yet.</p>
         {% endif %}
     </section>
 
-    <!-- Public Activities -->
+    <!-- Activities -->
     <section class="public-section">
         <h2 class="section-title">Activities</h2>
-        {% if public_activities %}
+        {% if activities %}
             <div class="card-grid">
-                {% for activity in public_activities %}
+                {% for activity in activities %}
                     <div class="card">
                         <div class="card-body">
                             <h2 class="card-title">{{ activity.title }}</h2>
@@ -100,7 +101,7 @@
                 {% endfor %}
             </div>
         {% else %}
-            <p class="empty-state">No public activities.</p>
+            <p class="empty-state">No activities yet.</p>
         {% endif %}
     </section>
 {% else %}

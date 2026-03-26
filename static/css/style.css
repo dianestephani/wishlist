@@ -66,8 +66,10 @@ header {
     background: linear-gradient(135deg, #7c3aed 0%, #581c87 100%);
     padding: 1rem 2rem;
     box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35);
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 50;
 }
 
@@ -179,6 +181,7 @@ header nav a {
 main {
     flex: 1;
     padding: 2rem;
+    padding-top: 5rem;
     max-width: 960px;
     margin: 0 auto;
     width: 100%;
@@ -576,8 +579,14 @@ strong {
 .empty-state {
     text-align: center;
     color: var(--text-muted);
-    margin-top: 3rem;
-    font-size: 1.05rem;
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-shadow);
+    padding: 2rem 1.5rem;
 }
 
 /* ===== Purchased card ===== */

@@ -2844,3 +2844,208 @@ class PurchaseNotificationTests(TestCase):
         self.client.post(url, {"confirm": True})
         self.assertEqual(Notification.objects.count(), 0)
         self.assertEqual(Message.objects.count(), 0)
+
+
+# ---------------------------------------------------------------------------
+# Context processor tests
+# ---------------------------------------------------------------------------
+class UnreadCountsTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.other = User.objects.create_user(
+            username="other", email="other@example.com", password="pass123"
+        )
+        self.client.login(username="testuser", password="pass123")
+
+    def test_no_unread_shows_no_dot(self):
+        response = self.client.get(reverse("wishlist:dashboard"))
+        self.assertNotContains(response, "notif-dot")
+
+    def test_unread_message_shows_dot(self):
+        from .messaging import get_or_create_conversation
+        convo = get_or_create_conversation(self.user, self.other)
+        Message.objects.create(conversation=convo, sender=self.other, subject="Hi", content="Hey")
+        response = self.client.get(reverse("wishlist:dashboard"))
+        self.assertContains(response, "notif-dot")
+
+    def test_unread_notification_shows_dot(self):
+        Notification.objects.create(
+            recipient=self.user, sender=self.other, type="wishlist", subject="Test"
+        )
+        response = self.client.get(reverse("wishlist:dashboard"))
+        self.assertContains(response, "notif-dot")
+
+    def test_pending_friend_request_shows_dot(self):
+        FriendRequest.objects.create(from_user=self.other, to_user=self.user)
+        response = self.client.get(reverse("wishlist:dashboard"))
+        self.assertContains(response, "notif-dot")
+
+    def test_read_messages_no_dot(self):
+        from .messaging import get_or_create_conversation
+        convo = get_or_create_conversation(self.user, self.other)
+        Message.objects.create(conversation=convo, sender=self.other, subject="Hi", content="Hey", is_read=True)
+        response = self.client.get(reverse("wishlist:dashboard"))
+        self.assertNotContains(response, "notif-dot")
+
+    def test_own_messages_dont_count(self):
+        from .messaging import get_or_create_conversation
+        convo = get_or_create_conversation(self.user, self.other)
+        Message.objects.create(conversation=convo, sender=self.user, subject="Hi", content="Hey")
+        response = self.client.get(reverse("wishlist:dashboard"))
+        self.assertNotContains(response, "notif-dot")
+
+
+# ---------------------------------------------------------------------------
+# New message view tests
+# ---------------------------------------------------------------------------
+class NewMessageViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.friend = User.objects.create_user(
+            username="buddy", email="buddy@example.com", password="pass123",
+            first_name="Jane", last_name="Doe",
+        )
+        Friendship.objects.create(user=self.user, friend=self.friend)
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:new_message")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_renders_page(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/new_message.html")
+
+    def test_shows_friends(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Jane Doe")
+
+    def test_empty_state_no_friends(self):
+        Friendship.objects.all().delete()
+        response = self.client.get(self.url)
+        self.assertContains(response, "Add some friends")
+
+
+# ---------------------------------------------------------------------------
+# Friend requests page tests
+# ---------------------------------------------------------------------------
+class FriendRequestsPageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="pass123"
+        )
+        self.requester = User.objects.create_user(
+            username="requester", email="req@example.com", password="pass123",
+            first_name="Jane", last_name="Doe",
+        )
+        self.client.login(username="testuser", password="pass123")
+        self.url = reverse("wishlist:friend_requests_page")
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_renders_page(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "wishlist/friend_requests.html")
+
+    def test_shows_pending_requests(self):
+        FriendRequest.objects.create(from_user=self.requester, to_user=self.user)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Jane Doe")
+        self.assertContains(response, "Accept")
+        self.assertContains(response, "Deny")
+
+    def test_empty_state(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "No pending friend requests")
+
+    def test_excludes_accepted(self):
+        FriendRequest.objects.create(
+            from_user=self.requester, to_user=self.user, status=FriendRequest.Status.ACCEPTED
+        )
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Jane Doe")
+
+
+# ---------------------------------------------------------------------------
+# Friend content view tests
+# ---------------------------------------------------------------------------
+class FriendWishlistDetailTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="viewer", email="v@e.com", password="pass123")
+        self.friend = User.objects.create_user(username="owner", email="o@e.com", password="pass123")
+        Friendship.objects.create(user=self.user, friend=self.friend)
+        self.wl = Wishlist.objects.create(owner=self.friend, name="Friend List")
+        self.item = WishlistItem.objects.create(user=self.friend, wishlist=self.wl, title="Cool Thing")
+        self.client.login(username="viewer", password="pass123")
+        self.url = reverse("wishlist:friend_wishlist_detail", args=[self.friend.username, self.wl.pk])
+
+    def test_friend_can_view(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Friend List")
+        self.assertContains(response, "Cool Thing")
+
+    def test_non_friend_gets_404(self):
+        stranger = User.objects.create_user(username="stranger", email="s@e.com", password="pass123")
+        self.client.login(username="stranger", password="pass123")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_shows_purchase_button(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "purchased this!")
+
+
+class FriendEventDetailTests(TestCase):
+    def setUp(self):
+        from datetime import date
+        self.user = User.objects.create_user(username="viewer", email="v@e.com", password="pass123")
+        self.friend = User.objects.create_user(username="owner", email="o@e.com", password="pass123")
+        Friendship.objects.create(user=self.user, friend=self.friend)
+        self.event = Event.objects.create(owner=self.friend, title="Party", date=date.today())
+        self.client.login(username="viewer", password="pass123")
+        self.url = reverse("wishlist:friend_event_detail", args=[self.friend.username, self.event.pk])
+
+    def test_friend_can_view(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Party")
+
+    def test_non_friend_gets_404(self):
+        stranger = User.objects.create_user(username="stranger", email="s@e.com", password="pass123")
+        self.client.login(username="stranger", password="pass123")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+
+class FriendActivityDetailTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="viewer", email="v@e.com", password="pass123")
+        self.friend = User.objects.create_user(username="owner", email="o@e.com", password="pass123")
+        Friendship.objects.create(user=self.user, friend=self.friend)
+        self.activity = Activity.objects.create(owner=self.friend, title="Hiking", location="Seattle")
+        self.client.login(username="viewer", password="pass123")
+        self.url = reverse("wishlist:friend_activity_detail", args=[self.friend.username, self.activity.pk])
+
+    def test_friend_can_view(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Hiking")
+        self.assertContains(response, "Seattle")
+
+    def test_non_friend_gets_404(self):
+        stranger = User.objects.create_user(username="stranger", email="s@e.com", password="pass123")
+        self.client.login(username="stranger", password="pass123")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)

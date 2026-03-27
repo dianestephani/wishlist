@@ -6,7 +6,7 @@
 <div class="auth-form">
     <h1>Just Kidding!</h1>
     <p><strong>{{ item.title }}</strong></p>
-    <p class="modal-description">Accidentally hit 'purchased' without actually buying? No problem! Just click the Submit button so I know exactly who lied to me.</p>
+    <p class="modal-description">Accidentally hit 'purchased' without actually buying? No problem! Just click the Submit button so {{ item.user.first_name|default:item.user.username }} knows exactly who lied to them.</p>
 
     <form method="post" novalidate>
         {% csrf_token %}

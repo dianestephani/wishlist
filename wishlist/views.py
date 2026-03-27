@@ -259,6 +259,16 @@ def notifications_api(request):
 
 
 @login_required
+def friend_requests_page(request):
+    pending = (
+        FriendRequest.objects.filter(to_user=request.user, status=FriendRequest.Status.PENDING)
+        .select_related("from_user")
+        .order_by("-created_at")
+    )
+    return render(request, "wishlist/friend_requests.html", {"pending_requests": pending})
+
+
+@login_required
 def friends(request):
     friendships = Friendship.objects.filter(user=request.user).select_related("friend")
     search_results = None
@@ -502,8 +512,10 @@ def mark_purchased(request, item_id):
     if item.status == WishlistItem.Status.PURCHASED:
         return redirect("wishlist:index")
 
+    owner_name = item.user.first_name or item.user.username
+
     if request.method == "POST":
-        form = PurchaseForm(request.POST)
+        form = PurchaseForm(request.POST, owner_name=owner_name)
         if form.is_valid():
             message = form.cleaned_data["message"]
             Purchase.objects.create(
@@ -534,7 +546,7 @@ def mark_purchased(request, item_id):
             messages.success(request, f'"{item.title}" has been marked as purchased. Thank you!')
             return redirect("wishlist:index")
     else:
-        form = PurchaseForm()
+        form = PurchaseForm(owner_name=owner_name)
 
     return render(request, "wishlist/purchase.html", {"form": form, "item": item})
 
@@ -576,6 +588,12 @@ def undo_purchase(request, item_id):
         form = UndoPurchaseForm()
 
     return render(request, "wishlist/undo_purchase.html", {"form": form, "item": item})
+
+
+@login_required
+def new_message(request):
+    friendships = Friendship.objects.filter(user=request.user).select_related("friend")
+    return render(request, "wishlist/new_message.html", {"friendships": friendships})
 
 
 @login_required

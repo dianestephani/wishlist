@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Friend Requests - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+    <h1 class="page-title">Notifications</h1>
+</div>
+
+<div class="notif-nav-links">
+    <a href="{% url 'wishlist:inbox' %}" class="notif-nav-link">Messages</a>
+    <a href="{% url 'wishlist:activity_feed' %}" class="notif-nav-link">Activity</a>
+    <a href="{% url 'wishlist:friend_requests_page' %}" class="notif-nav-link active">Friend Requests</a>
+</div>
+
+{% if pending_requests %}
+    <div class="activity-list">
+        {% for fr in pending_requests %}
+            <div class="activity-item">
+                <div class="activity-avatar" style="background: {{ fr.from_user.avatar_color|default:'#5eead4' }}">{{ fr.from_user.initials }}</div>
+                <div class="activity-content">
+                    <p class="activity-subject">{{ fr.from_user.first_name }} {{ fr.from_user.last_name }}</p>
+                    <p class="activity-preview">@{{ fr.from_user.username }} wants to be your friend</p>
+                    <span class="activity-time">{{ fr.created_at|timesince }} ago</span>
+                </div>
+                <div class="fr-page-actions">
+                    <a href="{% url 'wishlist:accept_friend_request' fr.pk %}" class="btn-fr-accept">Accept</a>
+                    <a href="{% url 'wishlist:deny_friend_request' fr.pk %}" class="btn-fr-deny">Deny</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-state">No pending friend requests.</p>
+{% endif %}
+{% endblock %}

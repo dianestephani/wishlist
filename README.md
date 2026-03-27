@@ -120,7 +120,7 @@ User, Wishlist, WishlistItem, Event, Activity, Purchase, Friendship, FriendReque
 
 ## Testing
 
-351 tests. Run with:
+356 tests. Run with:
 
 ```bash
 python manage.py test wishlist
@@ -137,13 +137,13 @@ python manage.py test --verbosity=2
 | **Dashboard** | Personalized welcome, sections, friends row, user isolation |
 | **Profile** | View, edit (username), delete with cascade |
 | **Public profiles** | Friend/non-friend views, restricted content, pending badge, friends list, friend-of-friend |
-| **Friend content** | View friend's wishlists/events/activities, non-friend 404 |
+| **Friend content** | View friend's wishlists/events/activities, non-friend 404, purchase/undo pages show friend's name |
 | **Friends** | Search, add/accept/deny/remove, badges |
 | **Friend requests page** | Pending requests, accept/deny, empty state |
 | **Messaging** | Inbox, conversations, replies, mark read, permissions, new message page |
 | **Activity feed** | Notifications, reply buttons, user isolation |
 | **Unread counts** | Context processor — messages, notifications, friend requests, badge display |
-| **Purchase integration** | Creates notification, message only with custom text, self-purchase skipped |
+| **Purchase integration** | Creates notification, message only with custom text, self-purchase skipped, dynamic owner name in purchase/undo forms and pages |
 | **Auto-friend signal** | Mutual friendship, admin notification, edge cases |
 | **CRUD** | Create/edit/delete for wishlists, items, events, activities — validation, user isolation |
 | **Wishlists index** | Wishlist cards, item counts, action buttons |

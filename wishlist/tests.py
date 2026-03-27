@@ -2838,6 +2838,26 @@ class PurchaseNotificationTests(TestCase):
         notif = Notification.objects.filter(recipient=self.owner).first()
         self.assertIn("no longer", notif.subject)
 
+    def test_purchase_form_shows_owner_name(self):
+        url = reverse("wishlist:mark_purchased", args=[self.item.pk])
+        response = self.client.get(url)
+        self.assertContains(response, "contacting Diane")
+
+    def test_purchase_form_uses_username_when_no_first_name(self):
+        self.owner.first_name = ""
+        self.owner.save()
+        url = reverse("wishlist:mark_purchased", args=[self.item.pk])
+        response = self.client.get(url)
+        self.assertContains(response, "contacting owner")
+
+    def test_undo_page_shows_owner_name(self):
+        Purchase.objects.create(item=self.item, purchased_by=self.buyer)
+        self.item.status = WishlistItem.Status.PURCHASED
+        self.item.save()
+        url = reverse("wishlist:undo_purchase", args=[self.item.pk])
+        response = self.client.get(url)
+        self.assertContains(response, "Diane knows exactly who lied")
+
     def test_self_purchase_no_notification(self):
         self.client.login(username="owner", password="pass123")
         url = reverse("wishlist:mark_purchased", args=[self.item.pk])
@@ -3005,6 +3025,23 @@ class FriendWishlistDetailTests(TestCase):
     def test_shows_purchase_button(self):
         response = self.client.get(self.url)
         self.assertContains(response, "purchased this!")
+
+    def test_purchase_page_shows_friend_owner_name(self):
+        self.friend.first_name = "Alex"
+        self.friend.save()
+        url = reverse("wishlist:mark_purchased", args=[self.item.pk])
+        response = self.client.get(url)
+        self.assertContains(response, "contacting Alex")
+
+    def test_undo_page_shows_friend_owner_name(self):
+        self.friend.first_name = "Alex"
+        self.friend.save()
+        Purchase.objects.create(item=self.item, purchased_by=self.user)
+        self.item.status = WishlistItem.Status.PURCHASED
+        self.item.save()
+        url = reverse("wishlist:undo_purchase", args=[self.item.pk])
+        response = self.client.get(url)
+        self.assertContains(response, "Alex knows exactly who lied")
 
 
 class FriendEventDetailTests(TestCase):

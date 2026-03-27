@@ -87,7 +87,7 @@
             <div class="form-group checkbox-group">
                 <label>
                     <input type="checkbox" name="confirm" id="purchase-confirm" required>
-                    <span>I confirm that I have purchased this item. If I have not purchased it and I click Confirm Purchase anyway, I understand that I am responsible for contacting Diane and telling her personally that I lied about getting her a birthday present.</span>
+                    <span>I confirm that I have purchased this item. If I have not purchased it and I click Confirm Purchase anyway, I understand that I am responsible for contacting {{ wishlist_obj.owner.first_name|default:wishlist_obj.owner.username }} and telling them personally that I lied about getting them a birthday present.</span>
                 </label>
             </div>
 
@@ -110,7 +110,7 @@
         <h2>Just Kidding!</h2>
         <p class="modal-item-title" id="undo-item-title"></p>
 
-        <p class="modal-description">Accidentally hit 'purchased' without actually buying? No problem! Just click the Submit button so I know exactly who lied to me.</p>
+        <p class="modal-description">Accidentally hit 'purchased' without actually buying? No problem! Just click the Submit button so {{ wishlist_obj.owner.first_name|default:wishlist_obj.owner.username }} knows exactly who lied to them.</p>
 
         <form id="undo-form" method="post" action="">
             {% csrf_token %}

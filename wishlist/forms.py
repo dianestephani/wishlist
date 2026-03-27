@@ -135,15 +135,16 @@ class ActivityForm(forms.ModelForm):
 
 
 class PurchaseForm(forms.Form):
-    confirm = forms.BooleanField(
-        required=True,
-        label=(
-            "I confirm that I have purchased this item. If I have not purchased it "
-            "and I click Confirm Purchase anyway, I understand that I am responsible for "
-            "contacting Diane and telling her personally that I lied about getting "
-            "her a birthday present."
-        ),
-    )
+    confirm = forms.BooleanField(required=True)
+
+    def __init__(self, *args, owner_name="the owner", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["confirm"].label = (
+            f"I confirm that I have purchased this item. If I have not purchased it "
+            f"and I click Confirm Purchase anyway, I understand that I am responsible for "
+            f"contacting {owner_name} and telling them personally that I lied about getting "
+            f"them a birthday present."
+        )
     message = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"rows": 3, "placeholder": "Leave a message (optional)"}),

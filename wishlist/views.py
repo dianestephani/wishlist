@@ -512,8 +512,10 @@ def mark_purchased(request, item_id):
     if item.status == WishlistItem.Status.PURCHASED:
         return redirect("wishlist:index")
 
+    owner_name = item.user.first_name or item.user.username
+
     if request.method == "POST":
-        form = PurchaseForm(request.POST)
+        form = PurchaseForm(request.POST, owner_name=owner_name)
         if form.is_valid():
             message = form.cleaned_data["message"]
             Purchase.objects.create(
@@ -544,7 +546,7 @@ def mark_purchased(request, item_id):
             messages.success(request, f'"{item.title}" has been marked as purchased. Thank you!')
             return redirect("wishlist:index")
     else:
-        form = PurchaseForm()
+        form = PurchaseForm(owner_name=owner_name)
 
     return render(request, "wishlist/purchase.html", {"form": form, "item": item})
 

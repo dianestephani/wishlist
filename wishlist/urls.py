@@ -29,6 +29,7 @@ urlpatterns = [
     path("profile/delete/", views.delete_account, name="delete_account"),
     # Messaging
     path("inbox/", views.inbox, name="inbox"),
+    path("inbox/new/", views.new_message, name="new_message"),
     path("conversation/<int:convo_id>/", views.conversation_detail, name="conversation_detail"),
     path("message/<int:user_id>/", views.start_conversation, name="start_conversation"),
     path("activity/", views.activity_feed, name="activity_feed"),

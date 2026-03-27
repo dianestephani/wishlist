@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}New Message - Wishlist{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:inbox' %}" class="back-link">&larr; Back to Messages</a>
+    <h1 class="page-title">New Message</h1>
+    <p class="page-description">Choose a friend to message.</p>
+</div>
+
+{% if friendships %}
+    <div class="friends-grid">
+        {% for friendship in friendships %}
+            <a href="{% url 'wishlist:start_conversation' friendship.friend.pk %}" class="friend-card">
+                <div class="friend-card-avatar" style="background: {{ friendship.friend.avatar_color|default:'#5eead4' }}">{{ friendship.friend.initials }}</div>
+                <span class="friend-card-name">{{ friendship.friend.first_name }} {{ friendship.friend.last_name }}</span>
+                <span class="friend-card-username">@{{ friendship.friend.username }}</span>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-state">Add some friends first to start messaging!</p>
+{% endif %}
+{% endblock %}

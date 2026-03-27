@@ -589,6 +589,12 @@ def undo_purchase(request, item_id):
 
 
 @login_required
+def new_message(request):
+    friendships = Friendship.objects.filter(user=request.user).select_related("friend")
+    return render(request, "wishlist/new_message.html", {"friendships": friendships})
+
+
+@login_required
 def inbox(request):
     conversations = (
         Conversation.objects.filter(participants=request.user)

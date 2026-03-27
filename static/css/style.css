@@ -1966,6 +1966,32 @@ strong {
     flex-shrink: 0;
 }
 
+/* ===== Inbox actions ===== */
+.inbox-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.btn-new-message {
+    padding: 0.5rem 1.25rem;
+    background: linear-gradient(135deg, var(--pink) 0%, var(--magenta) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-new-message:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px var(--pink-glow);
+    color: #fff;
+}
+
 /* ===== Inbox ===== */
 .inbox-list {
     display: flex;

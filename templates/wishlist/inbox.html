@@ -14,6 +14,10 @@
     <a href="{% url 'wishlist:friend_requests_page' %}" class="notif-nav-link">Friend Requests</a>
 </div>
 
+<div class="inbox-actions">
+    <a href="{% url 'wishlist:new_message' %}" class="btn-new-message">New Message</a>
+</div>
+
 {% if conversations %}
     <div class="inbox-list">
         {% for item in conversations %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ activity.title }} - {{ profile_user.first_name }}'s Activity{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:public_profile' profile_user.username %}" class="back-link">&larr; Back to {{ profile_user.first_name }}'s Profile</a>
+    <h1 class="page-title">{{ activity.title }}</h1>
+</div>
+
+<div class="event-detail-card">
+    {% if activity.location %}
+        <div class="event-detail-row">
+            <span class="event-detail-label">Location</span>
+            <span>{{ activity.location }}</span>
+        </div>
+    {% endif %}
+
+    {% if activity.notes %}
+        <div class="event-detail-row">
+            <span class="event-detail-label">Notes</span>
+            <span>{{ activity.notes|linebreaksbr }}</span>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

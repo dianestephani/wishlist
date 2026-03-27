@@ -370,6 +370,14 @@ def public_profile(request, username):
         from_user=request.user, to_user=profile_user, status=FriendRequest.Status.PENDING
     ).exists()
 
+    # Check if friend-of-friend
+    my_friend_ids = set(Friendship.objects.filter(user=request.user).values_list("friend_id", flat=True))
+    their_friend_ids = set(Friendship.objects.filter(user=profile_user).values_list("friend_id", flat=True))
+    is_friend_of_friend = bool(my_friend_ids & their_friend_ids) and not is_friend and not is_self
+
+    # Friends list for this profile
+    profile_friends = Friendship.objects.filter(user=profile_user).select_related("friend")
+
     wishlists = None
     events = None
     activities = None
@@ -382,12 +390,49 @@ def public_profile(request, username):
         "profile_user": profile_user,
         "is_self": is_self,
         "is_friend": is_friend,
+        "is_friend_of_friend": is_friend_of_friend,
         "has_pending_request": has_pending_request,
         "wishlists": wishlists,
         "events": events,
         "activities": activities,
+        "profile_friends": profile_friends,
     }
     return render(request, "wishlist/public_profile.html", context)
+
+
+@login_required
+def friend_wishlist_detail(request, username, wishlist_id):
+    profile_user = get_object_or_404(User, username=username)
+    is_friend = Friendship.objects.filter(user=request.user, friend=profile_user).exists()
+    if not is_friend and request.user != profile_user:
+        raise Http404
+    is_owner_friend = is_friend  # for template to show purchase buttons
+    wl = get_object_or_404(Wishlist, pk=wishlist_id, owner=profile_user)
+    items = WishlistItem.objects.filter(wishlist=wl).select_related("purchase")
+    context = {"wishlist_obj": wl, "items": items, "profile_user": profile_user, "is_friend": is_owner_friend}
+    return render(request, "wishlist/friend_wishlist_detail.html", context)
+
+
+@login_required
+def friend_event_detail(request, username, event_id):
+    profile_user = get_object_or_404(User, username=username)
+    is_friend = Friendship.objects.filter(user=request.user, friend=profile_user).exists()
+    if not is_friend and request.user != profile_user:
+        raise Http404
+    event = get_object_or_404(Event, pk=event_id, owner=profile_user)
+    context = {"event": event, "profile_user": profile_user}
+    return render(request, "wishlist/friend_event_detail.html", context)
+
+
+@login_required
+def friend_activity_detail(request, username, activity_id):
+    profile_user = get_object_or_404(User, username=username)
+    is_friend = Friendship.objects.filter(user=request.user, friend=profile_user).exists()
+    if not is_friend and request.user != profile_user:
+        raise Http404
+    activity = get_object_or_404(Activity, pk=activity_id, owner=profile_user)
+    context = {"activity": activity, "profile_user": profile_user}
+    return render(request, "wishlist/friend_activity_detail.html", context)
 
 
 @login_required

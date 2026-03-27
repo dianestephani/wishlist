@@ -41,7 +41,7 @@
         {% if wishlists %}
             <div class="card-grid">
                 {% for wl in wishlists %}
-                    <div class="card">
+                    <a href="{% url 'wishlist:friend_wishlist_detail' profile_user.username wl.id %}" class="card card-clickable">
                         <div class="card-body">
                             <h2 class="card-title">{{ wl.name }}</h2>
                             {% if wl.description %}
@@ -49,7 +49,7 @@
                             {% endif %}
                             <p class="card-sub">{{ wl.items.count }} item{{ wl.items.count|pluralize }}</p>
                         </div>
-                    </div>
+                    </a>
                 {% endfor %}
             </div>
         {% else %}
@@ -64,7 +64,7 @@
             <div class="card-grid">
                 {% timezone "America/Los_Angeles" %}
                 {% for event in events %}
-                    <div class="card">
+                    <a href="{% url 'wishlist:friend_event_detail' profile_user.username event.id %}" class="card card-clickable">
                         <div class="card-body">
                             <h2 class="card-title">{{ event.title }}</h2>
                             <p class="card-date">{{ event.date|date:"l, M d, Y" }}</p>
@@ -75,7 +75,7 @@
                                 <p class="card-sub">{{ event.address }}</p>
                             {% endif %}
                         </div>
-                    </div>
+                    </a>
                 {% endfor %}
                 {% endtimezone %}
             </div>
@@ -90,14 +90,14 @@
         {% if activities %}
             <div class="card-grid">
                 {% for activity in activities %}
-                    <div class="card">
+                    <a href="{% url 'wishlist:friend_activity_detail' profile_user.username activity.id %}" class="card card-clickable">
                         <div class="card-body">
                             <h2 class="card-title">{{ activity.title }}</h2>
                             {% if activity.location %}
                                 <p class="card-sub">{{ activity.location }}</p>
                             {% endif %}
                         </div>
-                    </div>
+                    </a>
                 {% endfor %}
             </div>
         {% else %}
@@ -108,5 +108,24 @@
     <div class="restricted-message">
         <p>Add {{ profile_user.first_name|default:profile_user.username }} as a friend to see their wishlists, events, and activities.</p>
     </div>
+{% endif %}
+
+<!-- Friends list (visible to friends and friends-of-friends) -->
+{% if is_self or is_friend or is_friend_of_friend %}
+    <section class="public-section">
+        <h2 class="section-title">{{ profile_user.first_name|default:profile_user.username }}'s Friends</h2>
+        {% if profile_friends %}
+            <div class="friends-row" style="flex-wrap: wrap;">
+                {% for friendship in profile_friends %}
+                    <a href="{% url 'wishlist:public_profile' friendship.friend.username %}" class="friend-chip">
+                        <span class="friend-avatar" style="background: {{ friendship.friend.avatar_color|default:'#5eead4' }}">{{ friendship.friend.initials }}</span>
+                        <span class="friend-name">{{ friendship.friend.first_name }} {{ friendship.friend.last_name }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No friends yet.</p>
+        {% endif %}
+    </section>
 {% endif %}
 {% endblock %}

@@ -44,6 +44,9 @@ urlpatterns = [
     path("friends/remove/<int:user_id>/", views.remove_friend, name="remove_friend"),
     path("api/friend-requests/", views.friend_requests_api, name="friend_requests_api"),
     path("users/<str:username>/", views.public_profile, name="public_profile"),
+    path("users/<str:username>/wishlist/<int:wishlist_id>/", views.friend_wishlist_detail, name="friend_wishlist_detail"),
+    path("users/<str:username>/event/<int:event_id>/", views.friend_event_detail, name="friend_event_detail"),
+    path("users/<str:username>/activity/<int:activity_id>/", views.friend_activity_detail, name="friend_activity_detail"),
     # Events
     path("events/", views.events_list, name="events"),
     path("events/<int:event_id>/", views.event_detail, name="event_detail"),

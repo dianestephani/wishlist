@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block title %}{{ event.title }} - {{ profile_user.first_name }}'s Event{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'wishlist:public_profile' profile_user.username %}" class="back-link">&larr; Back to {{ profile_user.first_name }}'s Profile</a>
+    <h1 class="page-title">{{ event.title }}</h1>
+</div>
+
+<div class="event-detail-card">
+    {% timezone "America/Los_Angeles" %}
+    <div class="event-detail-row">
+        <span class="event-detail-label">Date</span>
+        <span>{{ event.date|date:"l, F d, Y" }}</span>
+    </div>
+
+    {% if event.start_time %}
+        <div class="event-detail-row">
+            <span class="event-detail-label">Time</span>
+            <span>
+                {{ event.start_time|date:"g:i A" }}{% if event.end_time %} — {{ event.end_time|date:"g:i A" }}{% endif %}
+            </span>
+        </div>
+    {% endif %}
+
+    {% if event.address %}
+        <div class="event-detail-row">
+            <span class="event-detail-label">Address</span>
+            <span>{{ event.address }}</span>
+        </div>
+    {% endif %}
+
+    {% if event.notes %}
+        <div class="event-detail-row">
+            <span class="event-detail-label">Notes</span>
+            <span>{{ event.notes|linebreaksbr }}</span>
+        </div>
+    {% endif %}
+    {% endtimezone %}
+</div>
+{% endblock %}

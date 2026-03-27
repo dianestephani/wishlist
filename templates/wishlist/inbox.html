@@ -5,7 +5,13 @@
 {% block content %}
 <div class="page-header">
     <a href="{% url 'wishlist:dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
-    <h1 class="page-title">Messages</h1>
+    <h1 class="page-title">Notifications</h1>
+</div>
+
+<div class="notif-nav-links">
+    <a href="{% url 'wishlist:inbox' %}" class="notif-nav-link active">Messages</a>
+    <a href="{% url 'wishlist:activity_feed' %}" class="notif-nav-link">Activity</a>
+    <a href="{% url 'wishlist:friends' %}" class="notif-nav-link">Friends</a>
 </div>
 
 {% if conversations %}

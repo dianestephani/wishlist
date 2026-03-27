@@ -1369,6 +1369,28 @@ strong {
     color: #fff;
 }
 
+.btn-notif {
+    position: relative;
+}
+
+.notif-dot {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    background: var(--pink);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    line-height: 1;
+}
+
 .notif-panel {
     position: absolute;
     top: calc(100% + 0.5rem);

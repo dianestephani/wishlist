@@ -259,6 +259,16 @@ def notifications_api(request):
 
 
 @login_required
+def friend_requests_page(request):
+    pending = (
+        FriendRequest.objects.filter(to_user=request.user, status=FriendRequest.Status.PENDING)
+        .select_related("from_user")
+        .order_by("-created_at")
+    )
+    return render(request, "wishlist/friend_requests.html", {"pending_requests": pending})
+
+
+@login_required
 def friends(request):
     friendships = Friendship.objects.filter(user=request.user).select_related("friend")
     search_results = None

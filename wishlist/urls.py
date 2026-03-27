@@ -38,6 +38,7 @@ urlpatterns = [
     path("api/messages/", views.messages_api, name="messages_api"),
     # Friends
     path("friends/", views.friends, name="friends"),
+    path("friends/requests/", views.friend_requests_page, name="friend_requests_page"),
     path("friends/add/<int:user_id>/", views.send_friend_request, name="send_friend_request"),
     path("friends/request/<int:request_id>/accept/", views.accept_friend_request, name="accept_friend_request"),
     path("friends/request/<int:request_id>/deny/", views.deny_friend_request, name="deny_friend_request"),

@@ -74,11 +74,12 @@ See `.env.example` for a template.
 - **Items** — Mark as purchased with disclaimer checkbox, undo with "Just kidding!", tracked store clicks
 
 ### Social
-- **Friend system** — Search by username/email/phone, send friend requests, accept/deny via notifications. Mutual friendships. Remove friends (deletes both directions)
+- **Friend system** — Search by username/email/phone, send friend requests, accept/deny, remove friends. Mutual friendships
 - **Direct messaging** — Threaded conversations between friends with subject + content. Only friends can message
 - **Activity feed** — Notification system for wishlist actions (purchase/undo). Reply button opens conversation with prefilled subject
-- **Notifications panel** — 3 tabs (Messages, Activity, Friends) with real-time AJAX loading
-- **Public profiles** — `/users/<username>/` shows name and avatar. Friends see all wishlists/events/activities; non-friends see "Add Friend"
+- **Notifications** — Desktop: dropdown panel with 3 tabs (Messages, Activity, Friends). Mobile: bell links to dedicated notifications page with button-style tab navigation (Messages, Activity, Friend Requests)
+- **Friend content views** — View a friend's wishlists (with items + purchase buttons), events, and activities from their profile
+- **Public profiles** — `/users/<username>/` shows name, avatar, and friends list. Friends see all content; non-friends see "Add Friend". Friends-of-friends see basic profile
 - **Visibility system** — `is_public` toggle on wishlists, events, and activities (friends see all content regardless)
 
 ### Profile & Auth
@@ -88,7 +89,7 @@ See `.env.example` for a template.
 
 ### UI
 - **Dark glassmorphism theme** — Disco ball background, frosted glass cards, pink/purple accents, Poppins font
-- **Responsive design** — Hamburger menu on mobile, sticky navbar
+- **Responsive design** — Hamburger menu + bell icon on mobile, sticky navbar, footer always at page bottom
 - **Success messages** — Flash messages after every action
 - **OG meta tags** — "Wishlist App" title, disco ball image, social description
 
@@ -156,6 +157,10 @@ See `.env.example` for a template.
 | `/friends/request/<id>/deny/` | `deny_friend_request` | Deny request |
 | `/friends/remove/<id>/` | `remove_friend` | Remove friend (both directions) |
 | `/users/<username>/` | `public_profile` | Public user profile |
+| `/users/<username>/wishlist/<id>/` | `friend_wishlist_detail` | Friend's wishlist with items |
+| `/users/<username>/event/<id>/` | `friend_event_detail` | Friend's event detail |
+| `/users/<username>/activity/<id>/` | `friend_activity_detail` | Friend's activity detail |
+| `/friends/requests/` | `friend_requests_page` | Pending friend requests page |
 | `/api/notifications/` | `notifications_api` | Item activity JSON |
 | `/api/activity/` | `activity_feed_api` | Notification feed JSON |
 | `/api/messages/` | `messages_api` | Unread message count JSON |
@@ -184,7 +189,8 @@ python manage.py test --verbosity=2      # verbose
 | **Auth views** | Register (success, auto-login, message), Login (success, message, failure), Logout (redirect, message, session) |
 | **Dashboard** | Personalized welcome, 3 sections + friends row, data display, empty states, user isolation |
 | **Profile** | View, edit (username change), delete with cascade |
-| **Public profiles** | Friends see public content, non-friends see restricted view + Add Friend, pending badge, no email/phone exposed |
+| **Public profiles** | Friends see all content, non-friends see restricted view + Add Friend, pending badge, no email/phone, friends list visible, friend-of-friend detection |
+| **Friend content views** | View friend's wishlists/events/activities, friendship required (404 for non-friends) |
 | **Friends** | Search (username/email/phone), add friend button, already-friends badge, pending badge, empty state |
 | **Friend requests** | Send, accept (mutual friendship), deny (deletes), can't accept others', can't self-add |
 | **Remove friend** | Removes both directions, redirects, success message, login required, 404 for invalid user |
